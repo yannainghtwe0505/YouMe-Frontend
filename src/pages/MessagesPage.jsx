@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import api from '../api';
 
-export default function MessagesPage({ matchId }) {
+export default function MessagesPage() {
+  const { matchId } = useParams();
   const [messages, setMessages] = useState([]);
   const [body, setBody] = useState('');
   const [error, setError] = useState(null);

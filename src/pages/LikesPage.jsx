@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api';
 
 export default function LikesPage() {
@@ -179,6 +180,20 @@ export default function LikesPage() {
                     {like.matched ? '💕 Matched!' : '❤️ Like sent'}
                   </div>
                 </div>
+
+                {like.matched && like.matchId && (
+                  <Link
+                    to={`/messages/${like.matchId}`}
+                    className="btn btn-secondary"
+                    style={{
+                      fontSize: '12px',
+                      padding: '6px 12px',
+                      marginRight: '8px'
+                    }}
+                  >
+                    💬 Message
+                  </Link>
+                )}
 
                 {like.matched && (
                   <div style={{
