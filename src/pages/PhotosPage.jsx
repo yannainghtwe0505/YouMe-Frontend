@@ -123,16 +123,16 @@ export default function PhotosPage() {
         {/* Step 2: Upload to S3 */}
         {uploadUrl && (
           <div style={{
-            background: 'rgba(0, 212, 170, 0.1)',
+            background: 'var(--accent-soft)',
             padding: '20px',
             borderRadius: 'var(--border-radius)',
             marginBottom: '20px',
-            border: '1px solid var(--primary-color)'
+            border: '2px solid rgba(109, 94, 247, 0.35)'
           }}>
             <h3 style={{
               fontSize: '16px',
               fontWeight: '600',
-              color: 'var(--primary-color)',
+              color: 'var(--primary-dark)',
               marginBottom: '12px'
             }}>
               Step 2: Upload Photo
@@ -162,12 +162,13 @@ export default function PhotosPage() {
             </div>
 
             <div style={{
-              background: 'var(--accent-color)',
+              background: 'var(--bg-primary)',
               color: 'var(--text-primary)',
               padding: '12px',
               borderRadius: 'var(--border-radius)',
               fontSize: '14px',
-              marginBottom: '16px'
+              marginBottom: '16px',
+              border: '1px solid var(--border-color)'
             }}>
               <strong>Example curl command:</strong><br />
               <code style={{ fontSize: '12px', wordBreak: 'break-all' }}>

@@ -280,10 +280,10 @@ export default function ProfilePage({ onLogout }) {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+            <div className="profile-actions">
               <Link to="/" className="btn btn-ghost" style={{ textAlign: 'center' }}>Discover</Link>
               <Link to="/photos" className="btn btn-secondary" style={{ textAlign: 'center' }}>Photos</Link>
-              <button type="button" className="btn btn-primary" onClick={startEdit}>Edit</button>
+              <button type="button" className="btn btn-primary" onClick={startEdit}>Edit profile</button>
               <button type="button" className="btn btn-premium" onClick={handleUpgrade}>{profile.isPremium ? 'Premium Active' : 'Upgrade to Premium'}</button>
               <button type="button" className="btn btn-logout" onClick={handleLogout} style={{ gridColumn: '1 / -1' }}>Logout</button>
             </div>

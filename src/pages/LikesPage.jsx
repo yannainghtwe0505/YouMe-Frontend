@@ -109,8 +109,8 @@ export default function LikesPage() {
             <div style={{
               padding: '8px 12px',
               borderRadius: 'var(--border-radius)',
-              background: likeResult.matched ? 'rgba(0, 212, 170, 0.1)' : 'rgba(225, 112, 85, 0.1)',
-              color: likeResult.matched ? 'var(--primary-color)' : '#e17055',
+              background: likeResult.matched ? 'var(--accent-soft)' : 'rgba(244, 63, 94, 0.1)',
+              color: likeResult.matched ? 'var(--primary-dark)' : '#c2410c',
               fontSize: '14px',
               fontWeight: '500'
             }}>

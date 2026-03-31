@@ -34,7 +34,7 @@ export default function LoginPage({ onLogin }) {
       alignItems: 'center',
       justifyContent: 'center',
       padding: '16px',
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%)'
+      background: 'var(--bg-gradient-auth)'
     }}>
       <div className="fade-in" style={{ width: '100%', maxWidth: '420px' }}>
         {/* Header */}
