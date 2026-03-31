@@ -33,7 +33,7 @@ export default function RegisterPage({ onRegister }) {
       if (onRegister) onRegister(res.data);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      setError(err.response?.data?.error || err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -190,20 +190,6 @@ export default function RegisterPage({ onRegister }) {
               {loading ? '⏳ Creating Account...' : '✨ Create Account'}
             </button>
 
-            {error && (
-              <div style={{
-                color: '#e17055',
-                textAlign: 'center',
-                marginBottom: '16px',
-                fontSize: '14px',
-                padding: '12px',
-                background: 'rgba(225, 112, 85, 0.1)',
-                borderRadius: 'var(--border-radius)',
-                animation: 'slideDown 0.3s ease-out'
-              }}>
-                ⚠️ {error}
-              </div>
-            )}
           </form>
 
           {/* Divider */}

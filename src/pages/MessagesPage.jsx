@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import api from '../api';
 
 export default function MessagesPage() {
@@ -26,10 +26,11 @@ export default function MessagesPage() {
   const loadMessages = async () => {
     try {
       const res = await api.get(`/matches/${matchId}/messages`);
-      setMessages(Array.isArray(res.data) ? res.data : []);
+      const raw = res.data?.content ?? res.data;
+      setMessages(Array.isArray(raw) ? raw : []);
       setLoading(false);
     } catch (err) {
-      setError('Failed to load messages');
+      setError(err.response?.status === 403 ? 'You are not part of this match.' : 'Failed to load messages');
       setLoading(false);
     }
   };
@@ -68,52 +69,24 @@ export default function MessagesPage() {
   return (
     <div className="fade-in">
       <div className="card">
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '20px',
-          paddingBottom: '16px',
-          borderBottom: '1px solid var(--bg-secondary)'
-        }}>
+        <div className="chat-header">
+          <Link to="/messages" className="chat-back" aria-label="Back to conversations">‹</Link>
           <div
-            className="avatar-small"
-            style={{
-              background: 'var(--primary-color)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              marginRight: '12px'
-            }}
+            className="avatar-small chat-header-avatar"
           >
             💬
           </div>
-          <div>
-            <h1 style={{
-              fontSize: '20px',
-              fontWeight: '700',
-              color: 'var(--text-primary)',
-              margin: 0
-            }}>
-              Chat
-            </h1>
-            <p style={{
-              color: 'var(--text-secondary)',
-              fontSize: '14px',
-              margin: 0
-            }}>
-              Match #{matchId}
-            </p>
+          <div className="chat-header-text">
+            <h1>Chat</h1>
+            <p>Match #{matchId}</p>
           </div>
         </div>
 
-        <div className="message-list">
+        <div className="message-list chat-thread">
           {messages.length > 0 ? (
             messages.map((msg, index) => (
               <div
-                key={msg.id || index}
+                key={msg.id ?? `m-${index}`}
                 className={`message-item ${msg.isFromCurrentUser ? 'own' : 'other'}`}
               >
                 {msg.body}
@@ -141,7 +114,7 @@ export default function MessagesPage() {
           <textarea
             value={body}
             onChange={e => setBody(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             placeholder="Type a message..."
             className="form-input"
             style={{

@@ -1,7 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from './api';
 
 const placeholderAvatar = 'https://randomuser.me/api/portraits/lego/1.jpg';
+
+function cardUserId(user) {
+  return user?.id ?? user?.userId;
+}
 
 export default function UserList() {
   const [users, setUsers] = useState([]);
@@ -9,132 +14,194 @@ export default function UserList() {
   const [error, setError] = useState(null);
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
+  const [swipeClass, setSwipeClass] = useState('');
+  const [matchModal, setMatchModal] = useState(null);
 
-  useEffect(() => {
-    api.get('/feed')
-      .then(res => {
+  const loadFeed = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    setCurrent(0);
+    return api.get('/feed')
+      .then((res) => {
         setUsers(Array.isArray(res.data) ? res.data : []);
         setLoading(false);
       })
-      .catch(err => {
-        setError(err.message);
+      .catch((err) => {
+        setError(err.response?.data?.error || err.message || 'Request failed');
         setLoading(false);
       });
   }, []);
 
-  const handleAction = (action) => {
-    if (animating) return;
+  useEffect(() => {
+    loadFeed();
+  }, [loadFeed]);
+
+  const advance = useCallback(() => {
+    setCurrent((prev) => Math.min(prev + 1, users.length - 1));
+  }, [users.length]);
+
+  const handleAction = async (action) => {
+    if (animating || !users[current]) return;
+
+    const uid = cardUserId(users[current]);
+    if (uid == null) return;
 
     setAnimating(true);
-    setTimeout(() => {
-      setCurrent((prev) => Math.min(prev + 1, users.length - 1));
-      setAnimating(false);
-    }, 300);
+    if (action === 'dislike') setSwipeClass('swipe-left');
+    else if (action === 'like') setSwipeClass('swipe-right');
+    else if (action === 'super') setSwipeClass('swipe-up');
 
-    // Send action to backend
-    if (users[current]) {
-      const userId = users[current].id || users[current].userId;
-
-      if (action === 'like') {
-        api.post(`/likes/${userId}`).catch(err => console.error('Like failed:', err));
-      } else if (action === 'dislike') {
-        api.post(`/dislikes/${userId}`).catch(err => console.error('Dislike failed:', err));
+    try {
+      if (action === 'dislike') {
+        await api.post(`/dislikes/${uid}`);
+      } else if (action === 'like') {
+        const res = await api.post(`/likes/${uid}`);
+        if (res.data?.matched) {
+          setMatchModal({
+            name: users[current].name || users[current].displayName || 'Someone',
+            matchId: res.data.matchId,
+          });
+        }
       } else if (action === 'super') {
-        api.post(`/superlikes/${userId}`).catch(err => console.error('Super like failed:', err));
+        const res = await api.post(`/superlikes/${uid}`);
+        if (res.data?.matched) {
+          setMatchModal({
+            name: users[current].name || users[current].displayName || 'Someone',
+            matchId: res.data.matchId,
+          });
+        }
       }
+    } catch (err) {
+      console.error('Swipe action failed:', err);
     }
+
+    setTimeout(() => {
+      advance();
+      setSwipeClass('');
+      setAnimating(false);
+    }, 320);
   };
 
-  if (loading) return (
-    <div className="loading fade-in" style={{ minHeight: '400px' }}>
-      <div className="pulse" style={{ fontSize: '1.2rem' }}>🔍 Finding matches...</div>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="loading fade-in" style={{ minHeight: '400px' }}>
+        <div className="pulse" style={{ fontSize: '1.2rem' }}>Finding people near you…</div>
+      </div>
+    );
+  }
 
-  if (error) return (
-    <div className="fade-in">
-      <div className="card" style={{ background: 'rgba(255, 107, 107, 0.1)', border: '2px solid #ff6b6b' }}>
-        <div style={{ textAlign: 'center', color: '#ff6b6b' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '12px' }}>❌</div>
-          <div style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '8px' }}>Unable to load users</div>
-          <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>{error}</div>
+  if (error) {
+    return (
+      <div className="fade-in">
+        <div className="card card-surface discover-error">
+          <div className="discover-error-icon" aria-hidden>❌</div>
+          <h2>Unable to load discover</h2>
+          <p>{error}</p>
+          <button type="button" className="btn btn-primary" onClick={loadFeed}>Try again</button>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  if (users.length === 0) return (
-    <div className="fade-in">
-      <div className="empty">
-        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>👥</div>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '8px' }}>No users found</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>Check back later for new matches!</p>
+  if (users.length === 0) {
+    return (
+      <div className="fade-in">
+        <div className="empty discover-empty">
+          <div className="discover-empty-icon" aria-hidden>✨</div>
+          <h2>You&apos;re all caught up</h2>
+          <p>Passes and likes clear from this list. Check back later or refresh.</p>
+          <button type="button" className="btn btn-primary" onClick={loadFeed}>Refresh deck</button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   const user = users[current];
+  const nextUser = users[current + 1];
   const isLast = current === users.length - 1;
   const progress = ((current + 1) / users.length) * 100;
 
   return (
-    <div className="fade-in" style={{ marginBottom: '24px' }}>
-      {/* Header */}
-      <div style={{ marginBottom: '32px', textAlign: 'center' }}>
-        <h1 style={{ 
-          fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
-          fontWeight: '700', 
-          color: 'var(--text-primary)',
-          marginBottom: '8px' 
-        }}>
-          🔥 Discover
-        </h1>
-        <p style={{ 
-          fontSize: '1rem',
-          color: 'var(--text-secondary)',
-          marginBottom: '12px'
-        }}>
-          Swipe to find your perfect match
-        </p>
-
-        {/* Progress Bar */}
-        <div style={{ 
-          height: '4px', 
-          background: 'var(--bg-secondary)',
-          borderRadius: 'var(--radius-full)',
-          overflow: 'hidden',
-          marginBottom: '8px'
-        }}>
-          <div style={{
-            height: '100%',
-            background: `var(--gradient-primary)`,
-            width: `${progress}%`,
-            transition: 'width 0.5s ease-out'
-          }}></div>
+    <div className="fade-in discover-root">
+      {matchModal && (
+        <div className="match-overlay" role="dialog" aria-modal="true" aria-labelledby="match-title">
+          <div className="match-overlay-card">
+            <h2 id="match-title">It&apos;s a match!</h2>
+            <p>You and <strong>{matchModal.name}</strong> liked each other.</p>
+            <div className="match-overlay-actions">
+              {matchModal.matchId ? (
+                <Link to={`/messages/${matchModal.matchId}`} className="btn btn-primary" onClick={() => setMatchModal(null)}>
+                  Send a message
+                </Link>
+              ) : (
+                <Link to="/messages" className="btn btn-primary" onClick={() => setMatchModal(null)}>
+                  Go to messages
+                </Link>
+              )}
+              <button type="button" className="btn btn-ghost" onClick={() => setMatchModal(null)}>
+                Keep swiping
+              </button>
+            </div>
+          </div>
         </div>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
-          {current + 1} of {users.length}
-        </p>
-      </div>
+      )}
+
+      <header className="discover-header">
+        <h1>Discover</h1>
+        <p>Swipe-style matching — pass, like, or super like</p>
+        <div className="discover-progress-track">
+          <div className="discover-progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+        <span className="discover-progress-label">{current + 1} / {users.length}</span>
+      </header>
 
       <div className="tinder-stack">
-        <div className={`tinder-card ${animating ? 'animating' : ''}`}>
+        {nextUser && (
+          <div
+            className="tinder-card next"
+            aria-hidden
+          >
+            <div
+              className="tinder-card-image"
+              style={{
+                backgroundImage: `url(${nextUser.avatar || nextUser.photoUrl || placeholderAvatar})`,
+              }}
+            >
+              <div className="tinder-badge">
+                {nextUser.location ? `📍 ${nextUser.location}` : 'New nearby'}
+              </div>
+            </div>
+            <div className="tinder-meta">
+              <div className="tinder-identity">
+                <h2>{nextUser.name || nextUser.displayName || 'Member'}</h2>
+                <span>{nextUser.age != null ? `${nextUser.age}` : ''}</span>
+              </div>
+              <div className="tinder-info">
+                <p>{nextUser.bio || 'Say hi and see where it goes.'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className={`tinder-card ${animating ? `animating ${swipeClass}` : ''}`}>
           <div
             className="tinder-card-image"
             style={{
-              backgroundImage: `url(${user.avatar || placeholderAvatar})`,
+              backgroundImage: `url(${user.avatar || user.photoUrl || placeholderAvatar})`,
             }}
           >
-            <div className="tinder-badge">{user.location ? `📍 ${user.location}` : '💙 Open to new connections'}</div>
+            <div className="tinder-badge">
+              {user.location ? `📍 ${user.location}` : '💙 Open to chat'}
+            </div>
           </div>
 
           <div className="tinder-meta">
             <div className="tinder-identity">
-              <h2>{user.name || user.username || user.userId || 'Anonymous'}</h2>
-              <span>{user.age ? `${user.age}` : ''}</span>
+              <h2>{user.name || user.displayName || 'Member'}</h2>
+              <span>{user.age != null ? `${user.age}` : ''}</span>
             </div>
             <div className="tinder-info">
-              {user.bio ? <p>{user.bio}</p> : <p>Excited to meet people and create great stories.</p>}
+              <p>{user.bio || 'Excited to meet people and create great stories.'}</p>
             </div>
           </div>
         </div>
@@ -142,56 +209,44 @@ export default function UserList() {
 
       <div className="tinder-action-row">
         <button
+          type="button"
           onClick={() => handleAction('dislike')}
           className="tinder-action dislike"
           disabled={animating}
           title="Pass"
         >
-          ❌
+          ✕
         </button>
 
         <button
-          onClick={() => handleAction('like')}
-          className="tinder-action like"
-          disabled={animating}
-          title="Like"
-        >
-          💚
-        </button>
-
-        <button
+          type="button"
           onClick={() => handleAction('super')}
           className="tinder-action super"
           disabled={animating}
           title="Super Like"
         >
-          ✨
+          ★
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleAction('like')}
+          className="tinder-action like"
+          disabled={animating}
+          title="Like"
+        >
+          ♥
         </button>
       </div>
 
-      {/* All Profiles Viewed */}
       {isLast && (
-        <div
-          className="fade-in"
-          style={{
-            padding: '24px',
-            background: 'linear-gradient(135deg, rgba(0, 212, 170, 0.1) 0%, rgba(9, 132, 227, 0.1) 100%)',
-            borderRadius: 'var(--radius-xl)',
-            border: '2px solid rgba(0, 212, 170, 0.2)',
-            textAlign: 'center'
-          }}
-        >
-          <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎉</div>
-          <h3 style={{ color: 'var(--primary)', fontWeight: '600', marginBottom: '8px' }}>
-            You've seen all matches!
-          </h3>
-          <p style={{ color: 'var(--text-secondary)', margin: '0' }}>
-            New matches appear daily. Come back soon! 💫
-          </p>
+        <div className="discover-done card card-surface">
+          <span className="discover-done-icon" aria-hidden>🎉</span>
+          <h3>End of the line</h3>
+          <p>You&apos;ve seen everyone for now. Refresh to check for new people.</p>
+          <button type="button" className="btn btn-secondary" onClick={loadFeed}>Refresh deck</button>
         </div>
       )}
     </div>
   );
 }
-
-

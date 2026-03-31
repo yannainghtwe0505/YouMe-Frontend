@@ -32,7 +32,11 @@ export default function LikesPage() {
 
     try {
       const res = await api.post(`/likes/${toUserId}`);
-      setLikeResult(res.data);
+      setLikeResult({
+        matched: res.data.matched,
+        matchId: res.data.matchId,
+        superLike: false,
+      });
       setToUserId('');
       // Reload likes to show updated list
       loadLikes();
@@ -101,7 +105,7 @@ export default function LikesPage() {
             </button>
           </div>
 
-          {likeResult && (
+            {likeResult && (
             <div style={{
               padding: '8px 12px',
               borderRadius: 'var(--border-radius)',
@@ -111,6 +115,13 @@ export default function LikesPage() {
               fontWeight: '500'
             }}>
               {likeResult.matched ? '🎉 It\'s a match!' : 'Like sent!'}
+              {likeResult.matched && likeResult.matchId && (
+                <div style={{ marginTop: '8px' }}>
+                  <Link to={`/messages/${likeResult.matchId}`} className="btn btn-secondary" style={{ fontSize: '12px', padding: '6px 12px' }}>
+                    Open chat
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
@@ -177,7 +188,7 @@ export default function LikesPage() {
                     color: 'var(--text-secondary)',
                     fontSize: '12px'
                   }}>
-                    {like.matched ? '💕 Matched!' : '❤️ Like sent'}
+                    {like.matched ? '💕 Matched!' : (like.superLike ? '⭐ Super like sent' : '❤️ Like sent')}
                   </div>
                 </div>
 

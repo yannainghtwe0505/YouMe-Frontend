@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import FeedPage from './pages/FeedPage';
 import ProfilePage from './pages/ProfilePage';
 import LikesPage from './pages/LikesPage';
+import MatchesPage from './pages/MatchesPage';
 import MessagesPage from './pages/MessagesPage';
 import PhotosPage from './pages/PhotosPage';
 import LoginPage from './pages/LoginPage';
@@ -72,6 +73,14 @@ function App() {
             }
           />
           <Route
+            path="/messages"
+            element={
+              <ProtectedRoute user={user}>
+                <MatchesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/messages/:matchId"
             element={
               <ProtectedRoute user={user}>
@@ -104,7 +113,7 @@ function App() {
               <span className="nav-icon">❤️</span>
               <span className="nav-label">Likes</span>
             </Link>
-            <Link to="/messages/1" className={`nav-item ${location.pathname.startsWith('/messages') ? 'active' : ''}`}>
+            <Link to="/messages" className={`nav-item ${location.pathname.startsWith('/messages') ? 'active' : ''}`}>
               <span className="nav-icon">💬</span>
               <span className="nav-label">Messages</span>
             </Link>

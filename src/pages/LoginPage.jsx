@@ -21,7 +21,7 @@ export default function LoginPage({ onLogin }) {
       if (onLogin) onLogin(res.data);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
+      setError(err.response?.data?.error || err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,47 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api';
+
+function ageToBirthdayIso(age) {
+  if (age == null || age === '') return null;
+  const n = Number(age);
+  if (!Number.isFinite(n)) return null;
+  const y = new Date().getFullYear() - Math.floor(n);
+  if (y < 1920 || y > new Date().getFullYear()) return null;
+  return `${y}-06-01`;
+}
+
+function normalizeProfile(data) {
+  if (!data) return null;
+  return {
+    userId: data.userId,
+    email: data.email,
+    name: data.name ?? data.displayName ?? '',
+    bio: data.bio ?? '',
+    age: data.age ?? '',
+    location: data.location ?? data.city ?? '',
+    distance: data.distance ?? (data.distanceKm != null ? String(data.distanceKm) : ''),
+    education: data.education ?? '',
+    work: data.work ?? data.occupation ?? '',
+    hobby: data.hobby ?? data.hobbies ?? '',
+    isPremium: Boolean(data.isPremium),
+    avatar: data.avatar ?? data.photoUrl,
+  };
+}
+
+function profileToPayload(fields) {
+  const distanceKm = Number(fields.distance || 0);
+  return {
+    displayName: fields.name,
+    bio: fields.bio || null,
+    distanceKm: Number.isFinite(distanceKm) && distanceKm > 0 ? distanceKm : null,
+    city: fields.location || null,
+    education: fields.education || null,
+    occupation: fields.work || null,
+    hobbies: fields.hobby || null,
+    birthday: ageToBirthdayIso(fields.age),
+  };
+}
 
 export default function ProfilePage({ onLogout }) {
   const [profile, setProfile] = useState(null);
@@ -14,7 +56,7 @@ export default function ProfilePage({ onLogout }) {
   useEffect(() => {
     api.get('/me')
       .then(res => {
-        setProfile(res.data);
+        setProfile(normalizeProfile(res.data));
         setLoading(false);
       })
       .catch(err => {
@@ -26,10 +68,6 @@ export default function ProfilePage({ onLogout }) {
         }
       });
   }, []);
-
-  const handleExplore = () => {
-    window.location.href = '/';
-  };
 
   const startEdit = () => {
     if (!profile) return;
@@ -56,22 +94,9 @@ export default function ProfilePage({ onLogout }) {
     setLoading(true);
     setError(null);
     try {
-      const payload = {
-        userId: profile.userId,
-        displayName: editedProfile.name,
-        bio: editedProfile.bio,
-        distanceKm: Number(editedProfile.distance || 0) || null,
-      };
-      const res = await api.put('/me/profile', payload);
-      setProfile({
-        ...res.data,
-        name: editedProfile.name,
-        distance: editedProfile.distance,
-        education: editedProfile.education,
-        work: editedProfile.work,
-        hobby: editedProfile.hobby,
-        isPremium: profile.isPremium,
-      });
+      await api.put('/me/profile', profileToPayload(editedProfile));
+      const me = await api.get('/me');
+      setProfile(normalizeProfile(me.data));
       setIsEditing(false);
     } catch (err) {
       setError(err.response?.data || err.message || 'Could not update profile');
@@ -95,23 +120,9 @@ export default function ProfilePage({ onLogout }) {
     setCreating(true);
 
     try {
-      const payload = {
-        displayName: newProfile.name,
-        bio: newProfile.bio,
-        distanceKm: Number(newProfile.distance || 0) || null,
-      };
-      const res = await api.post('/me/profile', payload);
-      setProfile({
-        ...res.data,
-        name: newProfile.name,
-        age: newProfile.age,
-        location: newProfile.location,
-        distance: newProfile.distance,
-        education: newProfile.education,
-        work: newProfile.work,
-        hobby: newProfile.hobby,
-        isPremium: false,
-      });
+      await api.post('/me/profile', profileToPayload(newProfile));
+      const me = await api.get('/me');
+      setProfile(normalizeProfile(me.data));
       setNotFound(false);
     } catch (err) {
       setError(err.response?.data || 'Could not create profile');
@@ -185,20 +196,29 @@ export default function ProfilePage({ onLogout }) {
     <div className="fade-in">
       <div className="card">
         <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <div
-            className="avatar avatar-small"
-            style={{
-              background: 'var(--primary)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '24px',
-              fontWeight: 'bold'
-            }}
-          >
-            {(profile.name || profile.username || profile.email || 'U')[0].toUpperCase()}
-          </div>
+          {profile.avatar ? (
+            <div
+              className="profile-hero-photo"
+              style={{ backgroundImage: `url(${profile.avatar})` }}
+              role="img"
+              aria-label="Profile"
+            />
+          ) : (
+            <div
+              className="avatar avatar-small"
+              style={{
+                background: 'var(--primary)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontSize: '24px',
+                fontWeight: 'bold'
+              }}
+            >
+              {(profile.name || profile.username || profile.email || 'U')[0].toUpperCase()}
+            </div>
+          )}
           <h1 style={{
             fontSize: '24px',
             fontWeight: '700',
@@ -261,10 +281,11 @@ export default function ProfilePage({ onLogout }) {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
-              <button type="button" className="btn btn-ghost" onClick={handleExplore}>Explore</button>
+              <Link to="/" className="btn btn-ghost" style={{ textAlign: 'center' }}>Discover</Link>
+              <Link to="/photos" className="btn btn-secondary" style={{ textAlign: 'center' }}>Photos</Link>
               <button type="button" className="btn btn-primary" onClick={startEdit}>Edit</button>
               <button type="button" className="btn btn-premium" onClick={handleUpgrade}>{profile.isPremium ? 'Premium Active' : 'Upgrade to Premium'}</button>
-              <button type="button" className="btn btn-logout" onClick={handleLogout}>Logout</button>
+              <button type="button" className="btn btn-logout" onClick={handleLogout} style={{ gridColumn: '1 / -1' }}>Logout</button>
             </div>
           </>
         )}

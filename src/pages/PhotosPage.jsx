@@ -19,8 +19,9 @@ export default function PhotosPage() {
     setLoading(true);
 
     try {
-      const res = await api.post(`/photos/presign?filename=${filename}&contentType=${contentType}`);
+      const res = await api.post(`/photos/presign?filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`);
       setUploadUrl(res.data.uploadUrl);
+      if (res.data.s3Key) setS3Key(res.data.s3Key);
     } catch (err) {
       setError('Failed to get upload URL');
     } finally {
