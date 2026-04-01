@@ -13,6 +13,7 @@ function ageToBirthdayIso(age) {
 
 function normalizeProfile(data) {
   if (!data) return null;
+  const photos = Array.isArray(data.photos) ? data.photos.filter(Boolean) : [];
   return {
     userId: data.userId,
     email: data.email,
@@ -26,12 +27,17 @@ function normalizeProfile(data) {
     hobby: data.hobby ?? data.hobbies ?? '',
     isPremium: Boolean(data.isPremium),
     avatar: data.avatar ?? data.photoUrl,
+    photos,
+    latitude: data.latitude != null && Number.isFinite(Number(data.latitude)) ? Number(data.latitude) : null,
+    longitude: data.longitude != null && Number.isFinite(Number(data.longitude)) ? Number(data.longitude) : null,
   };
 }
 
 function profileToPayload(fields) {
   const distanceKm = Number(fields.distance || 0);
-  return {
+  const lat = fields.latitude;
+  const lon = fields.longitude;
+  const payload = {
     displayName: fields.name,
     bio: fields.bio || null,
     distanceKm: Number.isFinite(distanceKm) && distanceKm > 0 ? distanceKm : null,
@@ -41,6 +47,9 @@ function profileToPayload(fields) {
     hobbies: fields.hobby || null,
     birthday: ageToBirthdayIso(fields.age),
   };
+  if (typeof lat === 'number' && Number.isFinite(lat)) payload.latitude = lat;
+  if (typeof lon === 'number' && Number.isFinite(lon)) payload.longitude = lon;
+  return payload;
 }
 
 export default function ProfilePage({ onLogout }) {
@@ -48,8 +57,33 @@ export default function ProfilePage({ onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedProfile, setEditedProfile] = useState({ name: '', age: '', location: '', bio: '', distance: '', education: '', hobby: '', work: '', isPremium: false });
-  const [newProfile, setNewProfile] = useState({ name: '', age: '', location: '', bio: '', distance: '', education: '', hobby: '', work: '' });
+  const [editedProfile, setEditedProfile] = useState({
+    name: '',
+    age: '',
+    location: '',
+    bio: '',
+    distance: '',
+    education: '',
+    hobby: '',
+    work: '',
+    isPremium: false,
+    latitude: null,
+    longitude: null,
+  });
+  const [newProfile, setNewProfile] = useState({
+    name: '',
+    age: '',
+    location: '',
+    bio: '',
+    distance: '',
+    education: '',
+    hobby: '',
+    work: '',
+    latitude: null,
+    longitude: null,
+  });
+  const [locLoading, setLocLoading] = useState(false);
+  const [geoMessage, setGeoMessage] = useState(null);
   const [creating, setCreating] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
@@ -80,9 +114,35 @@ export default function ProfilePage({ onLogout }) {
       education: profile.education || '',
       hobby: profile.hobby || '',
       work: profile.work || '',
-      isPremium: !!profile.isPremium
+      isPremium: !!profile.isPremium,
+      latitude: profile.latitude ?? null,
+      longitude: profile.longitude ?? null,
     });
     setIsEditing(true);
+  };
+
+  const fillGeolocation = (setter) => {
+    if (!navigator.geolocation) {
+      setGeoMessage('Location is not supported in this browser.');
+      return;
+    }
+    setLocLoading(true);
+    setGeoMessage(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setter((prev) => ({
+          ...prev,
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        }));
+        setLocLoading(false);
+      },
+      () => {
+        setGeoMessage('Could not read your location. Check browser permissions.');
+        setLocLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60_000 },
+    );
   };
 
   const cancelEdit = () => {
@@ -178,6 +238,24 @@ export default function ProfilePage({ onLogout }) {
             <div className="form-group">
               <textarea value={newProfile.bio} onChange={e => setNewProfile(prev => ({ ...prev, bio: e.target.value }))} placeholder="Bio" className="form-input" rows={4} />
             </div>
+            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={locLoading}
+                onClick={() => fillGeolocation(setNewProfile)}
+              >
+                {locLoading ? 'Getting location…' : 'Use my current location'}
+              </button>
+              {(newProfile.latitude != null && newProfile.longitude != null) ? (
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  Will save: {newProfile.latitude.toFixed(5)}, {newProfile.longitude.toFixed(5)}
+                </span>
+              ) : null}
+              {geoMessage ? (
+                <span style={{ fontSize: '12px', color: '#e17055' }}>{geoMessage}</span>
+              ) : null}
+            </div>
             <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={creating}>{creating ? 'Creating...' : 'Create Profile'}</button>
           </form>
         </div>
@@ -196,7 +274,18 @@ export default function ProfilePage({ onLogout }) {
     <div className="fade-in">
       <div className="card">
         <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          {profile.avatar ? (
+          {profile.photos && profile.photos.length > 0 ? (
+            <div className="profile-photo-grid" role="list" aria-label="Profile photos">
+              {profile.photos.slice(0, 6).map((url, i) => (
+                <div
+                  key={`${url}-${i}`}
+                  className="profile-photo-grid-cell"
+                  style={{ backgroundImage: `url(${url})` }}
+                  role="listitem"
+                />
+              ))}
+            </div>
+          ) : profile.avatar ? (
             <div
               className="profile-hero-photo"
               style={{ backgroundImage: `url(${profile.avatar})` }}
@@ -231,6 +320,11 @@ export default function ProfilePage({ onLogout }) {
           <div style={{ color: '#555', fontSize: '13px', marginBottom: '12px' }}>
             {profile.isPremium ? 'Premium Member 🌟' : 'Free Member'}
           </div>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 8px' }}>
+            <Link to="/photos">Manage photos</Link>
+            {' '}
+            ({(profile.photos && profile.photos.length) || 0}/6)
+          </p>
         </div>
 
         {isEditing ? (
@@ -259,6 +353,28 @@ export default function ProfilePage({ onLogout }) {
             <div className="form-group">
               <textarea value={editedProfile.bio} onChange={e => setEditedProfile(prev => ({ ...prev, bio: e.target.value }))} placeholder="Bio" className="form-input" rows={3} />
             </div>
+            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={locLoading}
+                onClick={() => fillGeolocation(setEditedProfile)}
+              >
+                {locLoading ? 'Getting location…' : 'Use my current location'}
+              </button>
+              {(editedProfile.latitude != null && editedProfile.longitude != null) ? (
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  Coordinates saved on next save: {editedProfile.latitude.toFixed(5)}, {editedProfile.longitude.toFixed(5)}
+                </span>
+              ) : (
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  Sharing your position helps show approximate distance to others in Discover.
+                </span>
+              )}
+              {geoMessage ? (
+                <span style={{ fontSize: '12px', color: '#e17055' }}>{geoMessage}</span>
+              ) : null}
+            </div>
             <div style={{ display: 'flex', gap: '12px' }}>
               <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Save</button>
               <button type="button" onClick={cancelEdit} className="btn btn-ghost" style={{ flex: 1 }}>Cancel</button>
@@ -270,6 +386,9 @@ export default function ProfilePage({ onLogout }) {
               {renderProfileRow('Email', profile.email)}
               {renderProfileRow('Age', profile.age)}
               {renderProfileRow('Location', profile.location)}
+              {(profile.latitude != null && profile.longitude != null) ? (
+                renderProfileRow('Map position', 'Saved (used for distance in Discover)')
+              ) : null}
               {renderProfileRow('Distance', profile.distance)}
               {renderProfileRow('Education', profile.education)}
               {renderProfileRow('Work', profile.work)}

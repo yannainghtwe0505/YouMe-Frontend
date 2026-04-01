@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from './api';
 
@@ -6,6 +6,70 @@ const placeholderAvatar = 'https://randomuser.me/api/portraits/lego/1.jpg';
 
 function cardUserId(user) {
   return user?.id ?? user?.userId;
+}
+
+function galleryUrls(user, placeholder) {
+  const list = user?.photos;
+  if (Array.isArray(list) && list.length > 0) return list.filter(Boolean);
+  const one = user?.avatar || user?.photoUrl;
+  return one ? [one] : [placeholder];
+}
+
+function distanceBadgeLabel(user) {
+  if (user?.distanceFromYouKm != null) return `${user.distanceFromYouKm} km away`;
+  const loc = user?.city || user?.location;
+  if (loc) return `📍 ${loc}`;
+  return '💙 Open to chat';
+}
+
+function DiscoverCardPhotos({ user, placeholder }) {
+  const uid = cardUserId(user);
+  const gallery = useMemo(() => galleryUrls(user, placeholder), [user, placeholder]);
+  const [idx, setIdx] = useState(0);
+  const n = gallery.length;
+
+  useEffect(() => {
+    setIdx(0);
+  }, [uid]);
+
+  const prev = (e) => {
+    e?.stopPropagation?.();
+    setIdx((i) => (i - 1 + n) % n);
+  };
+  const next = (e) => {
+    e?.stopPropagation?.();
+    setIdx((i) => (i + 1) % n);
+  };
+
+  return (
+    <>
+      <div
+        className="youme-card-image-bg"
+        style={{ backgroundImage: `url(${gallery[idx]})` }}
+      />
+      {n > 1 ? (
+        <>
+          <button type="button" className="youme-photo-tap youme-photo-tap--prev" onClick={prev} aria-label="Previous photo" />
+          <button type="button" className="youme-photo-tap youme-photo-tap--next" onClick={next} aria-label="Next photo" />
+          <div className="youme-photo-dots" aria-label="Photos">
+            {gallery.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                className={`youme-photo-dot${i === idx ? ' active' : ''}`}
+                aria-label={`Photo ${i + 1}`}
+                aria-current={i === idx ? 'true' : undefined}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIdx(i);
+                }}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+    </>
+  );
 }
 
 function normalizeInterests(raw) {
@@ -76,12 +140,23 @@ function ProfileDetailOverlay({
   animating,
   placeholderAvatar: ph,
 }) {
+  const uid = user ? cardUserId(user) : null;
+  const gallery = useMemo(
+    () => (user ? galleryUrls(user, ph) : [ph]),
+    [user, ph],
+  );
+  const [heroIdx, setHeroIdx] = useState(0);
+
+  useEffect(() => {
+    if (open) setHeroIdx(0);
+  }, [open, uid]);
+
   if (!open || !user) return null;
 
   const name = user.name || user.displayName || 'Member';
   const age = user.age != null ? user.age : null;
   const interests = normalizeInterests(user.interests);
-  const photo = user.avatar || user.photoUrl || ph;
+  const n = gallery.length;
 
   const lookingParts = [];
   if (user.minAge != null && user.maxAge != null) {
@@ -104,7 +179,24 @@ function ProfileDetailOverlay({
     || (user.occupation && String(user.occupation).trim())
     || (user.hobbies && String(user.hobbies).trim())
     || user.distanceKm != null
+    || user.distanceFromYouKm != null
     || user.isPremium;
+
+  const distanceDetailValue =
+    user.distanceFromYouKm != null
+      ? `About ${user.distanceFromYouKm} km from you`
+      : user.distanceKm != null
+        ? `${user.distanceKm} km`
+        : null;
+
+  const heroPrev = (e) => {
+    e?.stopPropagation?.();
+    setHeroIdx((i) => (i - 1 + n) % n);
+  };
+  const heroNext = (e) => {
+    e?.stopPropagation?.();
+    setHeroIdx((i) => (i + 1) % n);
+  };
 
   return (
     <div
@@ -119,11 +211,43 @@ function ProfileDetailOverlay({
         onClick={(e) => e.stopPropagation()}
       >
       <div className="discover-detail-scroll">
-        <div
-          className="discover-detail-hero"
-          style={{ backgroundImage: `url(${photo})` }}
-        >
+        <div className="discover-detail-hero">
+          <div
+            className="discover-detail-hero-bg"
+            style={{ backgroundImage: `url(${gallery[heroIdx]})` }}
+          />
           <div className="discover-detail-hero-shade" />
+          {n > 1 ? (
+            <>
+              <button
+                type="button"
+                className="youme-photo-tap youme-photo-tap--prev"
+                onClick={heroPrev}
+                aria-label="Previous photo"
+              />
+              <button
+                type="button"
+                className="youme-photo-tap youme-photo-tap--next"
+                onClick={heroNext}
+                aria-label="Next photo"
+              />
+              <div className="youme-photo-dots" aria-label="Photos">
+                {gallery.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`youme-photo-dot${i === heroIdx ? ' active' : ''}`}
+                    aria-label={`Photo ${i + 1}`}
+                    aria-current={i === heroIdx ? 'true' : undefined}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setHeroIdx(i);
+                    }}
+                  />
+                ))}
+              </div>
+            </>
+          ) : null}
         </div>
 
         <div className="discover-detail-header">
@@ -176,7 +300,7 @@ function ProfileDetailOverlay({
               <DetailRow icon="🎓" label="Education" value={user.education} />
               <DetailRow icon="💼" label="Work" value={user.occupation} />
               <DetailRow icon="✨" label="Hobbies" value={user.hobbies} />
-              <DetailRow icon="📏" label="Distance" value={user.distanceKm != null ? `${user.distanceKm} km away` : null} />
+              <DetailRow icon="📏" label="Distance" value={distanceDetailValue} />
               {user.isPremium ? (
                 <DetailRow icon="⭐" label="Member" value="Premium" />
               ) : null}
@@ -431,15 +555,9 @@ export default function UserList() {
             className="youme-card next"
             aria-hidden
           >
-            <div
-              className="youme-card-image"
-              style={{
-                backgroundImage: `url(${nextUser.avatar || nextUser.photoUrl || placeholderAvatar})`,
-              }}
-            >
-              <div className="youme-badge">
-                {nextUser.location ? `📍 ${nextUser.location}` : 'New nearby'}
-              </div>
+            <div className="youme-card-image">
+              <DiscoverCardPhotos user={nextUser} placeholder={placeholderAvatar} />
+              <div className="youme-badge">{distanceBadgeLabel(nextUser)}</div>
             </div>
           <div className="youme-meta">
             <div className="youme-meta-top">
@@ -460,15 +578,9 @@ export default function UserList() {
         )}
 
         <div className={`youme-card ${animating ? `animating ${swipeClass}` : ''}`}>
-          <div
-            className="youme-card-image"
-            style={{
-              backgroundImage: `url(${user.avatar || user.photoUrl || placeholderAvatar})`,
-            }}
-          >
-            <div className="youme-badge">
-              {user.location ? `📍 ${user.location}` : '💙 Open to chat'}
-            </div>
+          <div className="youme-card-image">
+            <DiscoverCardPhotos user={user} placeholder={placeholderAvatar} />
+            <div className="youme-badge">{distanceBadgeLabel(user)}</div>
           </div>
 
           <div className="youme-meta">

@@ -151,7 +151,7 @@
 .youme-stack {
   position: relative;
   width: min(100%, 430px);
-  height: min(100dvh - 200px, 720px);
+  height: min(calc(100dvh - 200px), 720px);
   min-height: 560px;
   margin: 0 auto 24px;
 }
@@ -256,6 +256,7 @@
   position: absolute;
   top: 12px;
   left: 12px;
+  z-index: 4;
   padding: 8px 12px;
   border-radius: var(--radius-full);
   background: rgba(20, 184, 166, 0.92);
@@ -1071,6 +1072,23 @@ textarea {
   box-shadow: var(--shadow-md);
 }
 
+.profile-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-width: 320px;
+  margin: 0 auto 16px;
+}
+
+.profile-photo-grid-cell {
+  aspect-ratio: 1;
+  border-radius: var(--radius-lg, 12px);
+  background-size: cover;
+  background-position: center;
+  border: 2px solid rgba(109, 94, 247, 0.25);
+  box-shadow: var(--shadow-sm);
+}
+
 /* —— Discover: full profile overlay (YouMe detail sheet) —— */
 
 .discover-detail-overlay {
@@ -1107,16 +1125,26 @@ textarea {
 }
 
 .discover-detail-hero {
-  height: min(38vh, 280px);
+  position: relative;
+  height: min(52vh, 420px);
+  min-height: 300px;
+  overflow: hidden;
+}
+
+.discover-detail-hero-bg {
+  position: absolute;
+  inset: 0;
   background-size: cover;
   background-position: center top;
-  position: relative;
+  background-repeat: no-repeat;
 }
 
 .discover-detail-hero-shade {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background: linear-gradient(180deg, transparent 40%, rgba(12, 12, 15, 0.92) 100%);
+  pointer-events: none;
 }
 
 .discover-detail-header {
