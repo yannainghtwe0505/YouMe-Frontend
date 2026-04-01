@@ -148,16 +148,19 @@
 
 /* ============ CARDS & CONTAINERS ============ */
 
-.tinder-stack {
+.youme-stack {
   position: relative;
   width: min(100%, 430px);
-  height: min(100vh, 560px);
+  height: min(100dvh - 200px, 720px);
+  min-height: 560px;
   margin: 0 auto 24px;
 }
 
-.tinder-card {
+.youme-card {
   position: absolute;
   inset: 0;
+  display: flex;
+  flex-direction: column;
   background: #ffffffee;
   border-radius: var(--radius-2xl);
   box-shadow: 0 20px 50px rgba(58, 49, 130, 0.25);
@@ -168,25 +171,88 @@
   will-change: transform, opacity;
 }
 
-.tinder-card.next {
+.youme-card.next {
   transform: translate(0, 20px) scale(0.95);
   filter: saturate(0.96);
   opacity: 0.85;
 }
 
-.tinder-card.animating {
+.youme-card.animating {
   transform: translateY(-8px) scale(0.97);
   opacity: 0.8;
 }
 
-.tinder-card-image {
+.youme-card-image {
   position: relative;
-  height: 64%;
-  background-size: cover;
-  background-position: center;
+  flex: 1 1 auto;
+  min-height: min(58vh, 520px);
+  overflow: hidden;
 }
 
-.tinder-badge {
+.youme-card-image-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  transition: opacity 0.2s ease;
+}
+
+.youme-photo-tap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 30%;
+  max-width: 120px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.youme-photo-tap--prev {
+  left: 0;
+}
+
+.youme-photo-tap--next {
+  right: 0;
+}
+
+.youme-photo-dots {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(6px);
+}
+
+.youme-photo-dot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.45);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.youme-photo-dot.active {
+  background: #fff;
+  transform: scale(1.2);
+}
+
+.youme-badge {
   position: absolute;
   top: 12px;
   left: 12px;
@@ -199,47 +265,118 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
-.tinder-meta {
+.youme-meta {
+  flex: 0 0 auto;
   padding: 14px 16px;
   background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.88) 100%);
-  height: 36%;
+  min-height: 120px;
+  max-height: min(38vh, 220px);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-.tinder-identity {
+.youme-meta-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  flex-shrink: 0;
 }
 
-.tinder-identity h2 {
+.youme-meta-top .youme-identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.discover-expand-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(160deg, #2d2d35 0%, #1a1a22 100%);
+  color: #fafafa;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 4px 16px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(0, 0, 0, 0.12);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.discover-expand-btn svg {
+  display: block;
+  margin-top: -1px;
+  opacity: 0.96;
+}
+
+.discover-expand-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(109, 94, 247, 0.45);
+  background: linear-gradient(160deg, #38384a 0%, #25252e 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.1) inset,
+    0 6px 20px rgba(109, 94, 247, 0.22),
+    0 0 0 1px rgba(109, 94, 247, 0.15);
+}
+
+.discover-expand-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.discover-expand-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(109, 94, 247, 0.45),
+    0 4px 16px rgba(0, 0, 0, 0.18);
+}
+
+.youme-identity {
+  display: block;
+  min-width: 0;
+  flex: 1;
+}
+
+.youme-name-age {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35em;
   margin: 0;
+  line-height: 1.15;
   font-size: clamp(1.2rem, 4vw, 1.6rem);
-  color: var(--text-primary);
-}
-
-.tinder-identity span {
-  color: var(--accent);
   font-weight: 700;
 }
 
-.tinder-info p {
+.youme-display-name {
+  color: var(--text-primary);
+}
+
+.youme-display-age {
+  font-weight: 800;
+  font-size: 0.88em;
+  color: var(--accent);
+}
+
+.youme-info p {
   margin: 6px 0 0;
   color: #555;
   line-height: 1.42;
 }
 
-.tinder-action-row {
+.youme-action-row {
   display: flex;
   gap: 12px;
   justify-content: center;
   margin-top: 16px;
 }
 
-.tinder-action {
+.youme-action {
   width: 62px;
   height: 62px;
   border-radius: 50%;
@@ -254,22 +391,22 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.tinder-action.like {
+.youme-action.like {
   background: var(--gradient-secondary);
   color: white;
 }
 
-.tinder-action.dislike {
+.youme-action.dislike {
   background: #fff;
   color: #ff6b6b;
 }
 
-.tinder-action.super {
+.youme-action.super {
   background: #14b8a6;
   color: white;
 }
 
-.tinder-action:hover {
+.youme-action:hover {
   transform: scale(1.1);
   box-shadow: 0 18px 30px rgba(79, 70, 229, 0.28);
 }
@@ -672,17 +809,17 @@ textarea {
   margin-bottom: 12px;
 }
 
-.tinder-card.swipe-right.animating {
+.youme-card.swipe-right.animating {
   transform: translateX(115%) rotate(14deg);
   opacity: 0;
 }
 
-.tinder-card.swipe-left.animating {
+.youme-card.swipe-left.animating {
   transform: translateX(-115%) rotate(-14deg);
   opacity: 0;
 }
 
-.tinder-card.swipe-up.animating {
+.youme-card.swipe-up.animating {
   transform: translateY(-110%) scale(0.92);
   opacity: 0;
 }
@@ -932,4 +1069,300 @@ textarea {
   background-position: center;
   border: 4px solid var(--primary);
   box-shadow: var(--shadow-md);
+}
+
+/* —— Discover: full profile overlay (YouMe detail sheet) —— */
+
+.discover-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 0;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.discover-detail-inner {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  background: #0c0c0f;
+  color: #f5f5f7;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  max-height: 100%;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+}
+
+.discover-detail-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 100px;
+}
+
+.discover-detail-hero {
+  height: min(38vh, 280px);
+  background-size: cover;
+  background-position: center top;
+  position: relative;
+}
+
+.discover-detail-hero-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(12, 12, 15, 0.92) 100%);
+}
+
+.discover-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 8px;
+  margin-top: -48px;
+  position: relative;
+  z-index: 1;
+}
+
+.discover-detail-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.discover-detail-name-age {
+  margin: 0;
+  font-size: clamp(1.5rem, 5vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.3em;
+}
+
+.discover-detail-name-age .discover-detail-name {
+  display: inline;
+}
+
+.discover-detail-name-age .discover-detail-age {
+  display: inline;
+  font-weight: 800;
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+
+.discover-detail-close {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(22, 22, 30, 0.12);
+  background: #ffffff;
+  color: #16161e;
+  cursor: pointer;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 4px 20px rgba(0, 0, 0, 0.28);
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.discover-detail-close svg {
+  display: block;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+/* Filled chevron — do not use stroke here (invisible on white in some environments). */
+.discover-detail-close svg path {
+  fill: #0f0f14;
+  stroke: none;
+}
+
+.discover-detail-close:hover {
+  transform: translateY(1px);
+  background: #fff;
+  border-color: rgba(109, 94, 247, 0.4);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 1) inset,
+    0 6px 24px rgba(109, 94, 247, 0.2);
+}
+
+.discover-detail-close:hover svg path {
+  fill: #5346e0;
+}
+
+.discover-detail-close:active {
+  transform: scale(0.96);
+}
+
+.discover-detail-close:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(109, 94, 247, 0.5),
+    0 4px 20px rgba(0, 0, 0, 0.28);
+}
+
+.discover-detail-card {
+  margin: 10px 16px;
+  padding: 16px 18px;
+  border-radius: var(--radius-xl);
+  background: #1a1a1f;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.discover-detail-card-muted {
+  border-style: dashed;
+  opacity: 0.9;
+}
+
+.discover-detail-muted-text {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.discover-detail-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.discover-detail-section-emoji {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.discover-detail-pill-text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.discover-detail-bio {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.82);
+  white-space: pre-wrap;
+}
+
+.discover-detail-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.discover-detail-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.discover-detail-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.discover-detail-row:first-child {
+  padding-top: 0;
+}
+
+.discover-detail-row-icon {
+  font-size: 1.15rem;
+  line-height: 1.4;
+  flex-shrink: 0;
+  width: 28px;
+  text-align: center;
+}
+
+.discover-detail-row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.discover-detail-row-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.42);
+  margin-bottom: 2px;
+}
+
+.discover-detail-row-value {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+}
+
+.discover-detail-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.discover-detail-chip {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: #2a2a32;
+  color: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.discover-detail-chip:nth-child(3n + 1) {
+  background: linear-gradient(135deg, rgba(109, 94, 247, 0.35), rgba(236, 72, 153, 0.25));
+  border-color: rgba(236, 72, 153, 0.25);
+}
+
+.discover-detail-footer {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px 24px;
+  padding-bottom: max(24px, env(safe-area-inset-bottom, 16px));
+  background: linear-gradient(180deg, transparent 0%, #0c0c0f 35%);
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+.discover-detail-actions {
+  margin-top: 0;
+}
+
+@media (min-width: 769px) {
+  .discover-detail-overlay {
+    padding: 24px 16px;
+    align-items: center;
+  }
+
+  .discover-detail-inner {
+    min-height: min(720px, 92vh);
+    max-height: 92vh;
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+  }
 }

@@ -1,6 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import api from '../api';
+
+/** How often to pull new messages while this chat is open (ms). */
+const POLL_INTERVAL_MS = 3500;
 
 export default function MessagesPage() {
   const { matchId } = useParams();
@@ -15,25 +18,51 @@ export default function MessagesPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  useEffect(() => {
-    loadMessages();
-  }, [matchId]);
+  const loadMessages = useCallback(
+    async ({ silent = false } = {}) => {
+      try {
+        const res = await api.get(`/matches/${matchId}/messages`);
+        const raw = res.data?.content ?? res.data;
+        const next = Array.isArray(raw) ? raw : [];
+        setMessages(next);
+        if (!silent) {
+          setLoading(false);
+        }
+        setError(null);
+      } catch (err) {
+        if (!silent) {
+          setError(err.response?.status === 403 ? 'You are not part of this match.' : 'Failed to load messages');
+          setLoading(false);
+        }
+      }
+    },
+    [matchId]
+  );
 
   useEffect(() => {
-    scrollToBottom();
+    setLoading(true);
+    loadMessages({ silent: false });
+  }, [matchId, loadMessages]);
+
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState !== 'visible') return;
+      loadMessages({ silent: true });
+    };
+    const id = setInterval(tick, POLL_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [loadMessages]);
+
+  const scrollAnchor = useMemo(() => {
+    if (!messages.length) return '';
+    const m = messages[messages.length - 1];
+    return `${messages.length}-${m.id ?? 'n'}-${m.body ?? ''}`;
   }, [messages]);
 
-  const loadMessages = async () => {
-    try {
-      const res = await api.get(`/matches/${matchId}/messages`);
-      const raw = res.data?.content ?? res.data;
-      setMessages(Array.isArray(raw) ? raw : []);
-      setLoading(false);
-    } catch (err) {
-      setError(err.response?.status === 403 ? 'You are not part of this match.' : 'Failed to load messages');
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    if (!scrollAnchor) return;
+    scrollToBottom();
+  }, [scrollAnchor]);
 
   const sendMessage = async () => {
     if (!body.trim()) return;
@@ -44,8 +73,7 @@ export default function MessagesPage() {
     try {
       await api.post(`/matches/${matchId}/messages`, { body });
       setBody('');
-      // Reload messages to show the new one
-      loadMessages();
+      await loadMessages({ silent: true });
     } catch (err) {
       setError('Failed to send message');
     } finally {
