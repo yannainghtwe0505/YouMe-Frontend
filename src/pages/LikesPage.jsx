@@ -1,231 +1,245 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 
+const FALLBACK_AVATAR = 'https://randomuser.me/api/portraits/lego/1.jpg';
+
+function formatLikeTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
 export default function LikesPage() {
-  const [likes, setLikes] = useState([]);
+  const navigate = useNavigate();
+  const [tab, setTab] = useState('inbound');
+  const [inbound, setInbound] = useState([]);
+  const [outbound, setOutbound] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [toUserId, setToUserId] = useState('');
-  const [likeResult, setLikeResult] = useState(null);
+  const [actionBusyId, setActionBusyId] = useState(null);
+  const [actionMsg, setActionMsg] = useState(null);
 
-  useEffect(() => {
-    loadLikes();
+  const loadAll = useCallback(async () => {
+    try {
+      const [inRes, outRes] = await Promise.all([
+        api.get('/likes/inbound'),
+        api.get('/likes'),
+      ]);
+      setInbound(Array.isArray(inRes.data) ? inRes.data : []);
+      setOutbound(Array.isArray(outRes.data) ? outRes.data : []);
+      setError(null);
+    } catch {
+      setError('Could not load likes.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const loadLikes = async () => {
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  const likeBack = async (fromUserId) => {
+    setActionBusyId(fromUserId);
+    setActionMsg(null);
     try {
-      const res = await api.get('/likes');
-      setLikes(Array.isArray(res.data) ? res.data : []);
-      setLoading(false);
+      const res = await api.post(`/likes/${fromUserId}`);
+      if (res.data?.matched && res.data?.matchId) {
+        setActionMsg({ type: 'ok', text: "It's a match! Opening chat…" });
+        setTimeout(() => navigate(`/messages/${res.data.matchId}`), 500);
+      } else {
+        setActionMsg({ type: 'ok', text: 'Like sent — if they like you too, you will match.' });
+      }
+      await loadAll();
     } catch (err) {
-      setError('Failed to load likes');
-      setLoading(false);
-    }
-  };
-
-  const handleLike = async () => {
-    if (!toUserId.trim()) return;
-
-    setError(null);
-    setLikeResult(null);
-
-    try {
-      const res = await api.post(`/likes/${toUserId}`);
-      setLikeResult({
-        matched: res.data.matched,
-        matchId: res.data.matchId,
-        superLike: false,
+      setActionMsg({
+        type: 'err',
+        text: err.response?.data?.error || err.message || 'Could not like back',
       });
-      setToUserId('');
-      // Reload likes to show updated list
-      loadLikes();
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to send like');
+    } finally {
+      setActionBusyId(null);
     }
   };
 
-  if (loading) return (
-    <div className="loading fade-in">
-      <div className="pulse">Loading your likes...</div>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="loading fade-in">
+        <div className="pulse">Loading your YouMe likes…</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="fade-in">
-      <div className="card">
-        <h1 style={{
-          fontSize: '24px',
-          fontWeight: '700',
-          color: 'var(--text-primary)',
-          marginBottom: '8px',
-          textAlign: 'center'
-        }}>
-          Your Likes
-        </h1>
-        <p style={{
-          color: 'var(--text-secondary)',
-          textAlign: 'center',
-          marginBottom: '24px',
-          fontSize: '14px'
-        }}>
-          People you've liked and your matches
+    <div className="fade-in likes-hub">
+      <header className="matches-hub-header">
+        <h1>YouMe likes</h1>
+        <p>
+          On YouMe, two lists keep things simple:
+          <strong> Chose you</strong>
+          {' '}
+          is everyone who already liked you from Discover—like them back here to become a match.
+          <strong> You chose</strong>
+          {' '}
+          is people you liked first; when they like you too, you will connect under Messages.
         </p>
+      </header>
 
-        {/* Send Like Section */}
-        <div style={{
-          background: 'var(--bg-secondary)',
-          padding: '16px',
-          borderRadius: 'var(--border-radius)',
-          marginBottom: '24px'
-        }}>
-          <h3 style={{
-            fontSize: '16px',
-            fontWeight: '600',
-            color: 'var(--text-primary)',
-            marginBottom: '12px'
-          }}>
-            Send a Like
-          </h3>
+      {error ? (
+        <div className="matches-hub-error" role="alert">{error}</div>
+      ) : null}
 
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-            <input
-              value={toUserId}
-              onChange={e => setToUserId(e.target.value)}
-              placeholder="User ID"
-              className="form-input"
-              style={{ margin: 0, flex: 1 }}
-            />
-            <button
-              onClick={handleLike}
-              className="btn btn-primary"
-              disabled={!toUserId.trim()}
-            >
-              ❤️ Like
-            </button>
-          </div>
-
-            {likeResult && (
-            <div style={{
-              padding: '8px 12px',
-              borderRadius: 'var(--border-radius)',
-              background: likeResult.matched ? 'var(--accent-soft)' : 'rgba(244, 63, 94, 0.1)',
-              color: likeResult.matched ? 'var(--primary-dark)' : '#c2410c',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}>
-              {likeResult.matched ? '🎉 It\'s a match!' : 'Like sent!'}
-              {likeResult.matched && likeResult.matchId && (
-                <div style={{ marginTop: '8px' }}>
-                  <Link to={`/messages/${likeResult.matchId}`} className="btn btn-secondary" style={{ fontSize: '12px', padding: '6px 12px' }}>
-                    Open chat
-                  </Link>
-                </div>
-              )}
-            </div>
-          )}
-
-          {error && (
-            <div style={{
-              color: '#e17055',
-              fontSize: '14px',
-              marginTop: '8px'
-            }}>
-              {error}
-            </div>
-          )}
+      {actionMsg ? (
+        <div
+          className="likes-action-toast"
+          style={{
+            marginBottom: 12,
+            padding: '10px 14px',
+            borderRadius: 'var(--radius-md)',
+            fontSize: '0.9rem',
+            background: actionMsg.type === 'ok' ? 'rgba(39, 174, 96, 0.12)' : 'rgba(225, 112, 85, 0.12)',
+            color: actionMsg.type === 'ok' ? 'var(--success, #27ae60)' : '#c0392b',
+          }}
+        >
+          {actionMsg.text}
         </div>
+      ) : null}
 
-        {/* Likes List */}
-        {likes.length > 0 ? (
-          <div>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: 'var(--text-primary)',
-              marginBottom: '16px'
-            }}>
-              Your Activity ({likes.length})
-            </h3>
+      <div className="likes-tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'inbound'}
+          className={`likes-tab ${tab === 'inbound' ? 'likes-tab-active' : ''}`}
+          onClick={() => setTab('inbound')}
+        >
+          Chose you
+          {inbound.length > 0 ? (
+            <span className="likes-tab-badge">{inbound.length}</span>
+          ) : null}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'outbound'}
+          className={`likes-tab ${tab === 'outbound' ? 'likes-tab-active' : ''}`}
+          onClick={() => setTab('outbound')}
+        >
+          You chose
+          {outbound.length > 0 ? (
+            <span className="likes-tab-badge muted">{outbound.length}</span>
+          ) : null}
+        </button>
+      </div>
 
-            {likes.map((like, index) => (
-              <div
-                key={index}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '12px',
-                  background: 'var(--bg-secondary)',
-                  borderRadius: 'var(--border-radius)',
-                  marginBottom: '8px'
-                }}
-              >
-                <div
-                  className="avatar-small"
-                  style={{
-                    background: 'var(--primary-color)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    marginRight: '12px'
-                  }}
-                >
-                  {(like.toUserName || like.toUserId || 'U')[0].toUpperCase()}
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    fontWeight: '600',
-                    color: 'var(--text-primary)',
-                    fontSize: '14px'
-                  }}>
-                    {like.toUserName || `User ${like.toUserId}`}
-                  </div>
-                  <div style={{
-                    color: 'var(--text-secondary)',
-                    fontSize: '12px'
-                  }}>
-                    {like.matched ? '💕 Matched!' : (like.superLike ? '⭐ Super like sent' : '❤️ Like sent')}
-                  </div>
-                </div>
-
-                {like.matched && like.matchId && (
-                  <Link
-                    to={`/messages/${like.matchId}`}
-                    className="btn btn-secondary"
-                    style={{
-                      fontSize: '12px',
-                      padding: '6px 12px',
-                      marginRight: '8px'
-                    }}
-                  >
-                    💬 Message
-                  </Link>
-                )}
-
-                {like.matched && (
-                  <div style={{
-                    color: 'var(--primary-color)',
-                    fontSize: '18px'
-                  }}>
-                    💕
-                  </div>
-                )}
-              </div>
-            ))}
+      {tab === 'inbound' ? (
+        inbound.length === 0 ? (
+          <div className="matches-hub-empty card card-surface">
+            <span className="matches-hub-empty-icon" aria-hidden>✨</span>
+            <h2>No one in Chose you yet</h2>
+            <p>
+              When a YouMe member likes you on Discover before you like them, they appear here so you can like
+              back and match in one tap.
+            </p>
+            <Link to="/" className="btn btn-primary">Go to Discover</Link>
           </div>
         ) : (
-          <div className="empty">
-            <div>💔 No likes yet</div>
-            <div style={{ fontSize: '14px', marginTop: '8px' }}>
-              Start liking profiles to find matches!
-            </div>
-          </div>
-        )}
-      </div>
+          <>
+            <p className="likes-count-label">
+              {inbound.length === 1 ? '1 person on YouMe chose you' : `${inbound.length} people on YouMe chose you`}
+            </p>
+            <ul className="likes-list">
+              {inbound.map((row) => {
+                const name = row.fromUserName || 'Member';
+                const avatarUrl = row.fromUserAvatar || FALLBACK_AVATAR;
+                const when = formatLikeTime(row.createdAt);
+                const id = row.fromUserId;
+                return (
+                  <li key={row.id ?? `${id}-${row.createdAt}`}>
+                    <div className="likes-row card-surface likes-row-inbound">
+                      <div
+                        className="matches-avatar likes-avatar"
+                        style={{ backgroundImage: `url(${avatarUrl})` }}
+                        aria-hidden
+                      />
+                      <div className="likes-row-body">
+                        <div className="likes-row-top">
+                          <span className="likes-name">{name}</span>
+                          {when ? <span className="likes-when">{when}</span> : null}
+                        </div>
+                        <span className="likes-status likes-status-inbound">
+                          {row.superLike ? '⭐ Super liked you' : '❤️ Liked you'}
+                        </span>
+                      </div>
+                      <div className="likes-row-actions">
+                        <button
+                          type="button"
+                          className="btn btn-primary likes-msg-btn"
+                          disabled={actionBusyId != null}
+                          onClick={() => likeBack(id)}
+                        >
+                          {actionBusyId === id ? '…' : 'Like back'}
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )
+      ) : outbound.length === 0 ? (
+        <div className="matches-hub-empty card card-surface">
+          <span className="matches-hub-empty-icon" aria-hidden>❤️</span>
+          <h2>Your You chose list is empty</h2>
+          <p>
+            Use the heart on Discover to show interest on YouMe. People you chose stay here until you match or
+            they like you back.
+          </p>
+          <Link to="/" className="btn btn-primary">Go to Discover</Link>
+        </div>
+      ) : (
+        <>
+          <p className="likes-count-label">{outbound.length} {outbound.length === 1 ? 'person' : 'people'}</p>
+          <ul className="likes-list">
+            {outbound.map((like) => {
+              const name = like.toUserName || 'Member';
+              const avatarUrl = like.toUserAvatar || FALLBACK_AVATAR;
+              const when = formatLikeTime(like.createdAt);
+              return (
+                <li key={like.id ?? `${like.toUserId}-${like.createdAt}`}>
+                  <div className="likes-row card-surface">
+                    <div
+                      className="matches-avatar likes-avatar"
+                      style={{ backgroundImage: `url(${avatarUrl})` }}
+                      aria-hidden
+                    />
+                    <div className="likes-row-body">
+                      <div className="likes-row-top">
+                        <span className="likes-name">{name}</span>
+                        {when ? <span className="likes-when">{when}</span> : null}
+                      </div>
+                      <span className={`likes-status ${like.matched ? 'likes-status-match' : ''}`}>
+                        {like.matched
+                          ? 'Matched — you can message'
+                          : (like.superLike ? 'Super like sent — waiting on them' : 'Liked — waiting on them')}
+                      </span>
+                    </div>
+                    <div className="likes-row-actions">
+                      {like.matched && like.matchId ? (
+                        <Link to={`/messages/${like.matchId}`} className="btn btn-primary likes-msg-btn">
+                          Message
+                        </Link>
+                      ) : null}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
     </div>
   );
 }

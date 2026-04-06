@@ -16,6 +16,7 @@ export default function PhotosPage() {
   const [photos, setPhotos] = useState([]);
   const [listLoading, setListLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [busyPhotoId, setBusyPhotoId] = useState(null);
   const [error, setError] = useState(null);
 
   const loadPhotos = useCallback(async () => {
@@ -34,6 +35,33 @@ export default function PhotosPage() {
   useEffect(() => {
     loadPhotos();
   }, [loadPhotos]);
+
+  const removePhoto = async (id) => {
+    if (!window.confirm('Remove this photo?')) return;
+    setBusyPhotoId(id);
+    setError(null);
+    try {
+      await api.delete(`/photos/${id}`);
+      await loadPhotos();
+    } catch (err) {
+      setError(errMessage(err));
+    } finally {
+      setBusyPhotoId(null);
+    }
+  };
+
+  const makePrimary = async (id) => {
+    setBusyPhotoId(id);
+    setError(null);
+    try {
+      await api.put(`/photos/${id}/primary`);
+      await loadPhotos();
+    } catch (err) {
+      setError(errMessage(err));
+    } finally {
+      setBusyPhotoId(null);
+    }
+  };
 
   const onPickFile = async (e) => {
     const file = e.target.files?.[0];
@@ -148,6 +176,7 @@ export default function PhotosPage() {
             {photos.map((p) => (
               <div
                 key={p.id}
+                className="photo-cell"
                 style={{
                   aspectRatio: '1',
                   borderRadius: 'var(--radius-lg, 12px)',
@@ -177,6 +206,26 @@ export default function PhotosPage() {
                     Main
                   </span>
                 ) : null}
+                <div className="photo-cell-actions">
+                  {!p.primary ? (
+                    <button
+                      type="button"
+                      className="btn btn-secondary photo-cell-btn"
+                      disabled={busyPhotoId != null || listLoading}
+                      onClick={() => makePrimary(p.id)}
+                    >
+                      {busyPhotoId === p.id ? '…' : 'Make main'}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="btn btn-ghost photo-cell-btn photo-cell-remove"
+                    disabled={busyPhotoId != null || listLoading}
+                    onClick={() => removePhoto(p.id)}
+                  >
+                    {busyPhotoId === p.id ? '…' : 'Remove'}
+                  </button>
+                </div>
               </div>
             ))}
           </div>

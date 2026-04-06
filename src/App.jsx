@@ -1,7 +1,6 @@
-
-
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import api from './api';
 import FeedPage from './pages/FeedPage';
 import ProfilePage from './pages/ProfilePage';
 import LikesPage from './pages/LikesPage';
@@ -18,21 +17,86 @@ function ProtectedRoute({ user, children }) {
   return children;
 }
 
+const BASE_TITLE = 'YouMe';
+
 function App() {
   const [user, setUser] = useState(null);
   const [initializing, setInitializing] = useState(true);
+  const [messagesUnread, setMessagesUnread] = useState(0);
   const location = useLocation();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setUser({ token });
+  const fetchMe = useCallback(async (token) => {
+    try {
+      const res = await api.get('/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const d = res.data || {};
+      return {
+        token,
+        userId: d.userId,
+        email: d.email,
+        displayName: d.name,
+      };
+    } catch {
+      localStorage.removeItem('token');
+      return null;
     }
-    setInitializing(false);
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        if (!cancelled) setInitializing(false);
+        return;
+      }
+      const me = await fetchMe(token);
+      if (!cancelled) {
+        if (me) setUser(me);
+        setInitializing(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [fetchMe]);
+
+  const refreshMessagesUnread = useCallback(async () => {
+    if (!user?.token) return;
+    try {
+      const res = await api.get('/matches/unread-total');
+      setMessagesUnread(res.data?.total ?? 0);
+    } catch {
+      setMessagesUnread(0);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setMessagesUnread(0);
+      document.title = BASE_TITLE;
+      return undefined;
+    }
+    refreshMessagesUnread();
+    const id = setInterval(refreshMessagesUnread, 30000);
+    const onFocus = () => refreshMessagesUnread();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [user, refreshMessagesUnread, location.pathname]);
+
+  useEffect(() => {
+    if (!user) {
+      document.title = BASE_TITLE;
+      return;
+    }
+    document.title = messagesUnread > 0 ? `(${messagesUnread}) ${BASE_TITLE}` : BASE_TITLE;
+  }, [user, messagesUnread]);
+
   const handleLogin = (userData) => {
-    setUser(userData);
+    const token = userData?.token ?? localStorage.getItem('token');
+    setUser(token ? { ...userData, token } : userData);
   };
 
   const handleLogout = () => {
@@ -114,7 +178,12 @@ function App() {
               <span className="nav-label">Likes</span>
             </Link>
             <Link to="/messages" className={`nav-item ${location.pathname.startsWith('/messages') ? 'active' : ''}`}>
-              <span className="nav-icon">💬</span>
+              <span className="nav-icon-wrap">
+                <span className="nav-icon">💬</span>
+                {messagesUnread > 0 ? (
+                  <span className="nav-badge">{messagesUnread > 99 ? '99+' : messagesUnread}</span>
+                ) : null}
+              </span>
               <span className="nav-label">Messages</span>
             </Link>
             <Link to="/profile" className={`nav-item ${location.pathname === '/profile' ? 'active' : ''}`}>

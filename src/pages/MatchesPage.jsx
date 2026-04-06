@@ -4,6 +4,18 @@ import api from '../api';
 
 const placeholderAvatar = 'https://randomuser.me/api/portraits/lego/1.jpg';
 
+function formatMessageTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  if (sameDay) {
+    return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  }
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
 export default function MatchesPage() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,23 +68,42 @@ export default function MatchesPage() {
         </div>
       ) : (
         <ul className="matches-list">
-          {matches.map((m) => (
-            <li key={m.matchId}>
-              <Link to={`/messages/${m.matchId}`} className="matches-row">
-                <div
-                  className="matches-avatar"
-                  style={{
-                    backgroundImage: `url(${m.peerAvatar || placeholderAvatar})`,
-                  }}
-                />
-                <div className="matches-row-text">
-                  <span className="matches-name">{m.peerName || 'Match'}</span>
-                  <span className="matches-sub">Tap to open chat</span>
-                </div>
-                <span className="matches-chevron" aria-hidden>›</span>
-              </Link>
-            </li>
-          ))}
+          {matches.map((m) => {
+            const unread = Number(m.unreadCount) || 0;
+            const preview = m.lastMessageBody || 'No messages yet';
+            const timeLabel = formatMessageTime(m.lastMessageAt);
+            return (
+              <li key={m.matchId}>
+                <Link to={`/messages/${m.matchId}`} className="matches-row">
+                  <div
+                    className="matches-avatar"
+                    style={{
+                      backgroundImage: `url(${m.peerAvatar || placeholderAvatar})`,
+                    }}
+                  />
+                  <div className="matches-row-text">
+                    <div className="matches-row-topline">
+                      <span className="matches-name">{m.peerName || 'Match'}</span>
+                      {timeLabel ? (
+                        <span className="matches-time">{timeLabel}</span>
+                      ) : null}
+                    </div>
+                    <span className={`matches-sub ${unread > 0 ? 'matches-sub-unread' : ''}`}>
+                      {preview}
+                    </span>
+                  </div>
+                  <div className="matches-row-right">
+                    {unread > 0 ? (
+                      <span className="matches-unread-badge" aria-label={`${unread} unread`}>
+                        {unread > 99 ? '99+' : unread}
+                      </span>
+                    ) : null}
+                    <span className="matches-chevron" aria-hidden>›</span>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

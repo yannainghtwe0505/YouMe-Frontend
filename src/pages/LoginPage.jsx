@@ -28,17 +28,19 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px',
-      background: 'var(--bg-gradient-auth)'
-    }}>
+    <div
+      className="auth-page-root"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        background: 'var(--bg-gradient-auth)'
+      }}
+    >
       <div className="fade-in" style={{ width: '100%', maxWidth: '420px' }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <div className="auth-hero-stagger" style={{ textAlign: 'center', marginBottom: '40px' }}>
           <div style={{
             fontSize: '3rem',
             marginBottom: '16px'
@@ -49,18 +51,18 @@ export default function LoginPage({ onLogin }) {
             color: 'var(--text-primary)',
             marginBottom: '8px'
           }}>
-            Welcome Back
+            Welcome back to YouMe
           </h1>
           <p style={{
             color: 'var(--text-secondary)',
             fontSize: '0.95rem'
           }}>
-            Sign in to find your perfect match
+            Sign in to pick up your chats and discover new people.
           </p>
         </div>
 
         {/* Card */}
-        <div className="card" style={{ padding: 'clamp(24px, 5vw, 32px)' }}>
+        <div className="card auth-card-stagger" style={{ padding: 'clamp(24px, 5vw, 32px)' }}>
           <form onSubmit={handleLogin}>
             {/* Email Field */}
             <div className="form-group">

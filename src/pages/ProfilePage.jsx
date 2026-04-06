@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 
 function ageToBirthdayIso(age) {
@@ -53,6 +53,7 @@ function profileToPayload(fields) {
 }
 
 export default function ProfilePage({ onLogout }) {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -86,6 +87,12 @@ export default function ProfilePage({ onLogout }) {
   const [geoMessage, setGeoMessage] = useState(null);
   const [creating, setCreating] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [pwdCurrent, setPwdCurrent] = useState('');
+  const [pwdNew, setPwdNew] = useState('');
+  const [pwdBusy, setPwdBusy] = useState(false);
+  const [pwdMsg, setPwdMsg] = useState(null);
+  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   useEffect(() => {
     api.get('/me')
@@ -193,6 +200,48 @@ export default function ProfilePage({ onLogout }) {
 
   const handleLogout = () => {
     if (onLogout) onLogout();
+  };
+
+  const submitPasswordChange = async (e) => {
+    e.preventDefault();
+    setPwdMsg(null);
+    if ((pwdNew || '').length < 6) {
+      setPwdMsg({ type: 'err', text: 'New password must be at least 6 characters.' });
+      return;
+    }
+    setPwdBusy(true);
+    try {
+      await api.put('/me/password', { currentPassword: pwdCurrent, newPassword: pwdNew });
+      setPwdCurrent('');
+      setPwdNew('');
+      setPwdMsg({ type: 'ok', text: 'Password updated.' });
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message || 'Could not change password';
+      setPwdMsg({ type: 'err', text: msg });
+    } finally {
+      setPwdBusy(false);
+    }
+  };
+
+  const submitDeleteAccount = async (e) => {
+    e.preventDefault();
+    setPwdMsg(null);
+    if (!profile?.email || deleteConfirmEmail.trim().toLowerCase() !== String(profile.email).toLowerCase()) {
+      setPwdMsg({ type: 'err', text: 'Type your email exactly to confirm deletion.' });
+      return;
+    }
+    if (!window.confirm('Permanently delete your account and all data? This cannot be undone.')) return;
+    setDeleteBusy(true);
+    try {
+      await api.delete('/me');
+      localStorage.removeItem('token');
+      if (onLogout) onLogout();
+      navigate('/login');
+    } catch (err) {
+      setPwdMsg({ type: 'err', text: err.response?.data?.error || err.message || 'Could not delete account' });
+    } finally {
+      setDeleteBusy(false);
+    }
   };
 
   if (loading) return (
@@ -308,23 +357,25 @@ export default function ProfilePage({ onLogout }) {
               {(profile.name || profile.username || profile.email || 'U')[0].toUpperCase()}
             </div>
           )}
-          <h1 style={{
-            fontSize: '24px',
-            fontWeight: '700',
-            color: 'var(--text-primary)',
-            marginTop: '12px',
-            marginBottom: '4px'
-          }}>
+          <h1 className="profile-name-title">
             {profile.name || profile.username || 'Your Profile'}
           </h1>
-          <div style={{ color: '#555', fontSize: '13px', marginBottom: '12px' }}>
-            {profile.isPremium ? 'Premium Member 🌟' : 'Free Member'}
+          <div className="profile-member-line">
+            {profile.isPremium ? (
+              <span className="profile-premium-pill">YouMe Premium</span>
+            ) : (
+              <span className="profile-plan-muted">Free plan</span>
+            )}
           </div>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 8px' }}>
-            <Link to="/photos">Manage photos</Link>
-            {' '}
-            ({(profile.photos && profile.photos.length) || 0}/6)
-          </p>
+          <nav className="profile-quick-links" aria-label="Profile shortcuts">
+            <Link to="/">Discover</Link>
+            <span className="profile-quick-sep" aria-hidden>·</span>
+            <Link to="/photos">
+              Photos
+              {' '}
+              ({(profile.photos && profile.photos.length) || 0}/6)
+            </Link>
+          </nav>
         </div>
 
         {isEditing ? (
@@ -399,13 +450,89 @@ export default function ProfilePage({ onLogout }) {
               </div>
             </div>
 
-            <div className="profile-actions">
-              <Link to="/" className="btn btn-ghost" style={{ textAlign: 'center' }}>Discover</Link>
-              <Link to="/photos" className="btn btn-secondary" style={{ textAlign: 'center' }}>Photos</Link>
-              <button type="button" className="btn btn-primary" onClick={startEdit}>Edit profile</button>
-              <button type="button" className="btn btn-premium" onClick={handleUpgrade}>{profile.isPremium ? 'Premium Active' : 'Upgrade to Premium'}</button>
-              <button type="button" className="btn btn-logout" onClick={handleLogout} style={{ gridColumn: '1 / -1' }}>Logout</button>
+            <div className="profile-actions-clean">
+              <button type="button" className="btn btn-primary profile-btn-main" onClick={startEdit}>
+                Edit profile
+              </button>
+              <div className="profile-secondary-row">
+                {!profile.isPremium ? (
+                  <button type="button" className="profile-upgrade-btn" onClick={handleUpgrade}>
+                    Upgrade to Premium
+                  </button>
+                ) : (
+                  <span className="profile-secondary-spacer" />
+                )}
+                <button type="button" className="profile-logout-text" onClick={handleLogout}>
+                  Log out
+                </button>
+              </div>
             </div>
+
+            <details className="profile-account-details">
+              <summary>Account &amp; security</summary>
+              <div className="profile-account-body">
+                {pwdMsg ? (
+                  <div
+                    className={`profile-form-flash ${pwdMsg.type === 'ok' ? 'profile-form-flash-ok' : 'profile-form-flash-err'}`}
+                  >
+                    {pwdMsg.text}
+                  </div>
+                ) : null}
+                <form onSubmit={submitPasswordChange} className="profile-account-form">
+                  <h3 className="profile-account-h3">Change password</h3>
+                  <div className="form-group">
+                    <input
+                      type="password"
+                      className="form-input"
+                      placeholder="Current password"
+                      value={pwdCurrent}
+                      onChange={(e) => setPwdCurrent(e.target.value)}
+                      autoComplete="current-password"
+                      disabled={pwdBusy}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <input
+                      type="password"
+                      className="form-input"
+                      placeholder="New password (min 6 characters)"
+                      value={pwdNew}
+                      onChange={(e) => setPwdNew(e.target.value)}
+                      autoComplete="new-password"
+                      disabled={pwdBusy}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="btn btn-ghost btn-sm profile-btn-narrow"
+                    disabled={pwdBusy || !pwdCurrent || !pwdNew}
+                  >
+                    {pwdBusy ? 'Saving…' : 'Update password'}
+                  </button>
+                </form>
+                <form onSubmit={submitDeleteAccount} className="profile-account-form profile-delete-form">
+                  <h3 className="profile-account-h3">Delete account</h3>
+                  <p className="profile-account-hint">
+                    Type your email (
+                    {profile.email}
+                    ) to confirm.
+                  </p>
+                  <div className="form-group">
+                    <input
+                      type="email"
+                      className="form-input"
+                      placeholder="Your email"
+                      value={deleteConfirmEmail}
+                      onChange={(e) => setDeleteConfirmEmail(e.target.value)}
+                      disabled={deleteBusy}
+                    />
+                  </div>
+                  <button type="submit" className="profile-delete-btn" disabled={deleteBusy}>
+                    {deleteBusy ? 'Deleting…' : 'Delete my account'}
+                  </button>
+                </form>
+              </div>
+            </details>
           </>
         )}
       </div>

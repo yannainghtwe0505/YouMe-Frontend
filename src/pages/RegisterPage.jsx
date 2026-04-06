@@ -40,17 +40,19 @@ export default function RegisterPage({ onRegister }) {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px',
-      background: 'var(--bg-gradient-auth)'
-    }}>
+    <div
+      className="auth-page-root"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        background: 'var(--bg-gradient-auth)'
+      }}
+    >
       <div className="fade-in" style={{ width: '100%', maxWidth: '420px' }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <div className="auth-hero-stagger" style={{ textAlign: 'center', marginBottom: '40px' }}>
           <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎉</div>
           <h1 style={{
             fontSize: 'clamp(1.5rem, 5vw, 2rem)',
@@ -58,18 +60,18 @@ export default function RegisterPage({ onRegister }) {
             color: 'var(--text-primary)',
             marginBottom: '8px'
           }}>
-            Join the Fun!
+            Join YouMe
           </h1>
           <p style={{
             color: 'var(--text-secondary)',
             fontSize: '0.95rem'
           }}>
-            Create your account and start matching today
+            Create your profile and start meeting people on YouMe.
           </p>
         </div>
 
         {/* Card */}
-        <div className="card" style={{ padding: 'clamp(24px, 5vw, 32px)' }}>
+        <div className="card auth-card-stagger" style={{ padding: 'clamp(24px, 5vw, 32px)' }}>
           <form onSubmit={handleRegister}>
             {/* Email Field */}
             <div className="form-group">
