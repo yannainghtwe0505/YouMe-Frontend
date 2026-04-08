@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from './api';
+import DiscoverSettingsPanel from './DiscoverSettingsPanel';
+import { mergeDiscoveryFromApi, mergeLifestyleFromApi } from './discoveryDefaults';
 
 const placeholderAvatar = 'https://randomuser.me/api/portraits/lego/1.jpg';
 
@@ -16,21 +18,47 @@ function galleryUrls(user, placeholder) {
 }
 
 function distanceBadgeLabel(user) {
-  if (user?.distanceFromYouKm != null) return `${user.distanceFromYouKm} km away`;
+  if (user?.distanceFromYouKm != null) return `📍 ${user.distanceFromYouKm} km away`;
   const loc = user?.city || user?.location;
   if (loc) return `📍 ${loc}`;
   return '💙 Open to chat';
+}
+
+function IconSliders({ size = 22 }) {
+  /* Three horizontal tracks with knobs - reads as "filters / discovery" */
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="14" cy="6" r="2.5" fill="currentColor" />
+      <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="8" cy="12" r="2.5" fill="currentColor" />
+      <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="17" cy="18" r="2.5" fill="currentColor" />
+    </svg>
+  );
 }
 
 function DiscoverCardPhotos({ user, placeholder }) {
   const uid = cardUserId(user);
   const gallery = useMemo(() => galleryUrls(user, placeholder), [user, placeholder]);
   const [idx, setIdx] = useState(0);
+  const [srcFailed, setSrcFailed] = useState(false);
   const n = gallery.length;
 
   useEffect(() => {
     setIdx(0);
   }, [uid]);
+
+  useEffect(() => {
+    setSrcFailed(false);
+  }, [uid, idx]);
 
   const prev = (e) => {
     e?.stopPropagation?.();
@@ -41,11 +69,18 @@ function DiscoverCardPhotos({ user, placeholder }) {
     setIdx((i) => (i + 1) % n);
   };
 
+  const rawSrc = gallery[idx];
+  const imgSrc = srcFailed ? placeholder : rawSrc;
+
   return (
     <>
-      <div
+      <img
+        src={imgSrc}
+        alt=""
         className="youme-card-image-bg"
-        style={{ backgroundImage: `url(${gallery[idx]})` }}
+        onError={() => setSrcFailed(true)}
+        loading="lazy"
+        decoding="async"
       />
       {n > 1 ? (
         <>
@@ -146,10 +181,15 @@ function ProfileDetailOverlay({
     [user, ph],
   );
   const [heroIdx, setHeroIdx] = useState(0);
+  const [heroFailed, setHeroFailed] = useState(false);
 
   useEffect(() => {
     if (open) setHeroIdx(0);
   }, [open, uid]);
+
+  useEffect(() => {
+    setHeroFailed(false);
+  }, [open, uid, heroIdx]);
 
   if (!open || !user) return null;
 
@@ -212,9 +252,13 @@ function ProfileDetailOverlay({
       >
       <div className="discover-detail-scroll">
         <div className="discover-detail-hero">
-          <div
+          <img
+            src={heroFailed ? ph : gallery[heroIdx]}
+            alt=""
             className="discover-detail-hero-bg"
-            style={{ backgroundImage: `url(${gallery[heroIdx]})` }}
+            onError={() => setHeroFailed(true)}
+            loading="lazy"
+            decoding="async"
           />
           <div className="discover-detail-hero-shade" />
           {n > 1 ? (
@@ -324,6 +368,43 @@ function ProfileDetailOverlay({
           </section>
         )}
 
+        {(() => {
+          const life = user.lifestyle && typeof user.lifestyle === 'object' ? user.lifestyle : null;
+          if (!life) return null;
+          const labels = {
+            lookingFor: 'Looking for',
+            zodiac: 'Zodiac',
+            education: 'Education',
+            familyPlans: 'Family plans',
+            communicationStyle: 'Communication',
+            loveStyle: 'Love style',
+            pets: 'Pets',
+            drinking: 'Drinking',
+            smoking: 'Smoking',
+            workout: 'Workout',
+            socialMedia: 'Social media',
+          };
+          const langs = Array.isArray(life.languages) ? life.languages.filter(Boolean).join(', ') : '';
+          const rows = Object.keys(labels)
+            .map((k) => ({ k, v: life[k] }))
+            .filter(({ v }) => v != null && String(v).trim() !== '');
+          if (rows.length === 0 && !langs) return null;
+          return (
+            <section className="discover-detail-card">
+              <h3 className="discover-detail-section-title">
+                <span className="discover-detail-section-emoji" aria-hidden>✨</span>
+                Lifestyle
+              </h3>
+              <div className="discover-detail-rows">
+                {rows.map(({ k, v }) => (
+                  <DetailRow key={k} icon="•" label={labels[k]} value={String(v)} />
+                ))}
+                {langs ? <DetailRow icon="🌐" label="Languages" value={langs} /> : null}
+              </div>
+            </section>
+          );
+        })()}
+
         {lookingParts.length === 0 && (user.bio || '').trim() === '' && !hasEssentials && interests.length === 0 && (
           <section className="discover-detail-card discover-detail-card-muted">
             <p className="discover-detail-muted-text">They haven&apos;t added much yet — start a chat after you match to learn more.</p>
@@ -376,20 +457,130 @@ export default function UserList() {
   const [swipeClass, setSwipeClass] = useState('');
   const [matchModal, setMatchModal] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [discoveryLimited, setDiscoveryLimited] = useState(false);
+  const [activeRadiusKm, setActiveRadiusKm] = useState(null);
+  const [viewerHasCoords, setViewerHasCoords] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsError, setSettingsError] = useState(null);
+  const [limitEnabled, setLimitEnabled] = useState(false);
+  const [maxKm, setMaxKm] = useState(50);
+  const [settingsHasCoords, setSettingsHasCoords] = useState(false);
+  const [locLoading, setLocLoading] = useState(false);
+  const [geoHint, setGeoHint] = useState(null);
+  const [discoverySettings, setDiscoverySettings] = useState(() => mergeDiscoveryFromApi(null));
+  const [lifestyle, setLifestyle] = useState(() => mergeLifestyleFromApi(null));
+  const [minAge, setMinAge] = useState(18);
+  const [maxAge, setMaxAge] = useState(35);
 
   const loadFeed = useCallback(() => {
     setLoading(true);
     setError(null);
     setCurrent(0);
-    return api.get('/feed')
-      .then((res) => {
-        setUsers(Array.isArray(res.data) ? res.data : []);
+    return api
+      .get('/feed')
+      .then((feedRes) => {
+        setUsers(Array.isArray(feedRes.data) ? feedRes.data : []);
         setLoading(false);
+        return api.get('/me').catch(() => null);
+      })
+      .then((meRes) => {
+        if (!meRes) return;
+        const d = meRes.data;
+        const km = d?.distanceKm;
+        const lim = km != null && km > 0;
+        setDiscoveryLimited(lim);
+        setActiveRadiusKm(lim && typeof km === 'number' ? km : null);
+        const lat = d?.latitude;
+        const lon = d?.longitude;
+        setViewerHasCoords(
+          lat != null && lon != null && Number.isFinite(Number(lat)) && Number.isFinite(Number(lon)),
+        );
       })
       .catch((err) => {
         setError(err.response?.data?.error || err.message || 'Request failed');
         setLoading(false);
       });
+  }, []);
+
+  const openDiscoverySettings = useCallback(() => {
+    setSettingsOpen(true);
+    setSettingsError(null);
+    setGeoHint(null);
+    api.get('/me')
+      .then((res) => {
+        const data = res.data;
+        const km = data?.distanceKm;
+        const limited = km != null && km > 0;
+        setLimitEnabled(limited);
+        setMaxKm(limited && typeof km === 'number' ? km : 50);
+        const lat = data?.latitude;
+        const lon = data?.longitude;
+        setSettingsHasCoords(
+          lat != null && lon != null && Number.isFinite(Number(lat)) && Number.isFinite(Number(lon)),
+        );
+        setDiscoverySettings(mergeDiscoveryFromApi(data));
+        setLifestyle(mergeLifestyleFromApi(data));
+        const a = data?.minAge;
+        const b = data?.maxAge;
+        if (typeof a === 'number' && Number.isFinite(a)) setMinAge(Math.max(18, Math.min(80, a)));
+        if (typeof b === 'number' && Number.isFinite(b)) setMaxAge(Math.max(18, Math.min(80, b)));
+      })
+      .catch(() => {
+        setSettingsError('Could not load your settings.');
+      });
+  }, []);
+
+  const saveDiscoverySettings = useCallback(async () => {
+    setSettingsSaving(true);
+    setSettingsError(null);
+    try {
+      let a = minAge;
+      let b = maxAge;
+      if (a > b) [a, b] = [b, a];
+      await api.put('/me/discovery-settings', {
+        maxDistanceKm: limitEnabled ? maxKm : null,
+        minAge: a,
+        maxAge: b,
+        discoverySettings,
+        lifestyle,
+      });
+      setSettingsOpen(false);
+      await loadFeed();
+    } catch (err) {
+      setSettingsError(err.response?.data?.error || err.message || 'Could not save');
+    } finally {
+      setSettingsSaving(false);
+    }
+  }, [limitEnabled, maxKm, minAge, maxAge, discoverySettings, lifestyle, loadFeed]);
+
+  const useDiscoveryLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setGeoHint('Location is not supported in this browser.');
+      return;
+    }
+    setLocLoading(true);
+    setGeoHint(null);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          await api.put('/me/discovery-settings', {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          });
+          setSettingsHasCoords(true);
+        } catch (err) {
+          setGeoHint(err.response?.data?.error || err.message || 'Could not save location');
+        } finally {
+          setLocLoading(false);
+        }
+      },
+      () => {
+        setGeoHint('Could not read your location. Check browser permissions.');
+        setLocLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60_000 },
+    );
   }, []);
 
   useEffect(() => {
@@ -415,8 +606,8 @@ export default function UserList() {
   }, [detailOpen]);
 
   const advance = useCallback(() => {
-    setCurrent((prev) => Math.min(prev + 1, users.length - 1));
-  }, [users.length]);
+    setCurrent((prev) => prev + 1);
+  }, []);
 
   const handleAction = async (action) => {
     if (animating || !users[current]) return;
@@ -486,14 +677,55 @@ export default function UserList() {
     );
   }
 
-  if (users.length === 0) {
+  const deckExhausted = users.length === 0 || current >= users.length;
+
+  if (deckExhausted) {
     return (
       <div className="fade-in">
+        <DiscoverSettingsPanel
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          discoverySettings={discoverySettings}
+          setDiscoverySettings={setDiscoverySettings}
+          lifestyle={lifestyle}
+          setLifestyle={setLifestyle}
+          minAge={minAge}
+          maxAge={maxAge}
+          setMinAge={setMinAge}
+          setMaxAge={setMaxAge}
+          limitEnabled={limitEnabled}
+          setLimitEnabled={setLimitEnabled}
+          maxKm={maxKm}
+          setMaxKm={setMaxKm}
+          hasCoords={settingsHasCoords}
+          locLoading={locLoading}
+          geoHint={geoHint}
+          onUseLocation={useDiscoveryLocation}
+          onSave={saveDiscoverySettings}
+          saving={settingsSaving}
+          saveError={settingsError}
+        />
         <div className="empty discover-empty">
           <div className="discover-empty-icon" aria-hidden>✨</div>
           <h2>You&apos;re all caught up</h2>
-          <p>Passes and likes clear from this list. Check back later or refresh.</p>
-          <button type="button" className="btn btn-primary" onClick={loadFeed}>Refresh deck</button>
+          {discoveryLimited ? (
+            <p>
+              Strong discovery filters (distance, age, modes, or deal-breakers) may be hiding everyone. Loosen
+              filters in
+              {' '}
+              <strong>Discovery settings</strong>
+              {' '}
+              and refresh.
+            </p>
+          ) : (
+            <p>Passes and likes clear from this list. Check back later or refresh.</p>
+          )}
+          <div className="discover-empty-actions">
+            <button type="button" className="btn btn-secondary" onClick={openDiscoverySettings}>
+              Discovery settings
+            </button>
+            <button type="button" className="btn btn-primary" onClick={loadFeed}>Refresh deck</button>
+          </div>
         </div>
       </div>
     );
@@ -501,11 +733,33 @@ export default function UserList() {
 
   const user = users[current];
   const nextUser = users[current + 1];
-  const isLast = current === users.length - 1;
   const progress = ((current + 1) / users.length) * 100;
 
   return (
     <div className="fade-in discover-root">
+      <DiscoverSettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        discoverySettings={discoverySettings}
+        setDiscoverySettings={setDiscoverySettings}
+        lifestyle={lifestyle}
+        setLifestyle={setLifestyle}
+        minAge={minAge}
+        maxAge={maxAge}
+        setMinAge={setMinAge}
+        setMaxAge={setMaxAge}
+        limitEnabled={limitEnabled}
+        setLimitEnabled={setLimitEnabled}
+        maxKm={maxKm}
+        setMaxKm={setMaxKm}
+        hasCoords={settingsHasCoords}
+        locLoading={locLoading}
+        geoHint={geoHint}
+        onUseLocation={useDiscoveryLocation}
+        onSave={saveDiscoverySettings}
+        saving={settingsSaving}
+        saveError={settingsError}
+      />
       <ProfileDetailOverlay
         user={user}
         open={detailOpen}
@@ -540,9 +794,42 @@ export default function UserList() {
         </div>
       )}
 
-      <header className="discover-header">
-        <h1>Discover</h1>
-        <p>Swipe-style matching — pass, like, or super like</p>
+      <header className="discover-header discover-header--toolbar">
+        <div className="discover-header-top">
+          <button
+            type="button"
+            className="discover-settings-trigger"
+            onClick={openDiscoverySettings}
+            aria-label="Discovery settings"
+            title="Discovery settings"
+          >
+            <IconSliders />
+          </button>
+          <div className="discover-header-main">
+            <h1>Discover</h1>
+            <p>Swipe-style matching — pass, like, or super like</p>
+            {discoveryLimited && activeRadiusKm != null ? (
+              <p className={`discover-filter-chip${viewerHasCoords ? '' : ' discover-filter-chip-warn'}`}>
+                {viewerHasCoords ? (
+                  <>
+                    Within ~
+                    {activeRadiusKm}
+                    {' '}
+                    km — adjust with the filter button
+                  </>
+                ) : (
+                  <>
+                    ~
+                    {activeRadiusKm}
+                    {' '}
+                    km selected — add your location in Discovery settings for this to apply
+                  </>
+                )}
+              </p>
+            ) : null}
+          </div>
+          <div className="discover-settings-trigger-spacer" aria-hidden />
+        </div>
         <div className="discover-progress-track">
           <div className="discover-progress-fill" style={{ width: `${progress}%` }} />
         </div>
@@ -642,14 +929,6 @@ export default function UserList() {
         </button>
       </div>
 
-      {isLast && (
-        <div className="discover-done card card-surface">
-          <span className="discover-done-icon" aria-hidden>🎉</span>
-          <h3>End of the line</h3>
-          <p>You&apos;ve seen everyone for now. Refresh to check for new people.</p>
-          <button type="button" className="btn btn-secondary" onClick={loadFeed}>Refresh deck</button>
-        </div>
-      )}
     </div>
   );
 }

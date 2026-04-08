@@ -78,8 +78,8 @@ api.interceptors.response.use(
 
     if (status === 401 && !onAuthForm && !onLoginPage) {
       localStorage.removeItem('token');
-      window.location.href = '/login';
-      return Promise.reject(new Error('Session expired or unauthorized. Redirecting to login.'));
+      window.dispatchEvent(new CustomEvent('youme:auth-lost'));
+      return Promise.reject(new Error('Session expired or unauthorized.'));
     }
     if (status === 403 && onAuthForm) {
       const msg = error.response?.data?.error || 'Could not reach the sign-in service. Please try again.';

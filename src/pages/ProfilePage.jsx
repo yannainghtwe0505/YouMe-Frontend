@@ -110,6 +110,17 @@ export default function ProfilePage({ onLogout }) {
       });
   }, []);
 
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState !== 'visible' || isEditing) return;
+      api.get('/me')
+        .then((res) => setProfile(normalizeProfile(res.data)))
+        .catch(() => {});
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [isEditing]);
+
   const startEdit = () => {
     if (!profile) return;
     setEditedProfile({
@@ -273,7 +284,7 @@ export default function ProfilePage({ onLogout }) {
               <input value={newProfile.location} onChange={e => setNewProfile(prev => ({ ...prev, location: e.target.value }))} placeholder="Location" className="form-input" />
             </div>
             <div className="form-group">
-              <input value={newProfile.distance} onChange={e => setNewProfile(prev => ({ ...prev, distance: e.target.value }))} placeholder="Distance (e.g., 10km)" className="form-input" />
+              <input value={newProfile.distance} onChange={e => setNewProfile(prev => ({ ...prev, distance: e.target.value }))} placeholder="Max discover distance (km, e.g. 10)" className="form-input" />
             </div>
             <div className="form-group">
               <input value={newProfile.education} onChange={e => setNewProfile(prev => ({ ...prev, education: e.target.value }))} placeholder="Education" className="form-input" />
@@ -326,20 +337,18 @@ export default function ProfilePage({ onLogout }) {
           {profile.photos && profile.photos.length > 0 ? (
             <div className="profile-photo-grid" role="list" aria-label="Profile photos">
               {profile.photos.slice(0, 6).map((url, i) => (
-                <div
-                  key={`${url}-${i}`}
-                  className="profile-photo-grid-cell"
-                  style={{ backgroundImage: `url(${url})` }}
-                  role="listitem"
-                />
+                <div key={`${url}-${i}`} className="profile-photo-grid-cell" role="listitem">
+                  <img src={url} alt="" loading="lazy" decoding="async" />
+                </div>
               ))}
             </div>
           ) : profile.avatar ? (
-            <div
-              className="profile-hero-photo"
-              style={{ backgroundImage: `url(${profile.avatar})` }}
-              role="img"
-              aria-label="Profile"
+            <img
+              src={profile.avatar}
+              alt=""
+              className="profile-hero-photo profile-hero-photo-img"
+              loading="lazy"
+              decoding="async"
             />
           ) : (
             <div
@@ -390,7 +399,7 @@ export default function ProfilePage({ onLogout }) {
               <input value={editedProfile.location} onChange={e => setEditedProfile(prev => ({ ...prev, location: e.target.value }))} placeholder="Location" className="form-input" />
             </div>
             <div className="form-group">
-              <input value={editedProfile.distance} onChange={e => setEditedProfile(prev => ({ ...prev, distance: e.target.value }))} placeholder="Distance" className="form-input" />
+              <input value={editedProfile.distance} onChange={e => setEditedProfile(prev => ({ ...prev, distance: e.target.value }))} placeholder="Max discover distance (km)" className="form-input" />
             </div>
             <div className="form-group">
               <input value={editedProfile.education} onChange={e => setEditedProfile(prev => ({ ...prev, education: e.target.value }))} placeholder="Education" className="form-input" />
@@ -440,7 +449,7 @@ export default function ProfilePage({ onLogout }) {
               {(profile.latitude != null && profile.longitude != null) ? (
                 renderProfileRow('Map position', 'Saved (used for distance in Discover)')
               ) : null}
-              {renderProfileRow('Distance', profile.distance)}
+              {renderProfileRow('Discover radius', profile.distance ? `${profile.distance} km` : null)}
               {renderProfileRow('Education', profile.education)}
               {renderProfileRow('Work', profile.work)}
               {renderProfileRow('Hobby', profile.hobby)}

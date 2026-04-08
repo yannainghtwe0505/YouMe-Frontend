@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
+import { cssUrlValue } from '../imageUtils';
 
 const placeholderAvatar = 'https://randomuser.me/api/portraits/lego/1.jpg';
 
@@ -78,7 +79,7 @@ export default function MatchesPage() {
                   <div
                     className="matches-avatar"
                     style={{
-                      backgroundImage: `url(${m.peerAvatar || placeholderAvatar})`,
+                      backgroundImage: cssUrlValue(m.peerAvatar || placeholderAvatar),
                     }}
                   />
                   <div className="matches-row-text">

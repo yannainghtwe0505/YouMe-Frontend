@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
+import { cssUrlValue } from '../imageUtils';
 
 const FALLBACK_AVATAR = 'https://randomuser.me/api/portraits/lego/1.jpg';
 
@@ -20,6 +21,7 @@ export default function LikesPage() {
   const [error, setError] = useState(null);
   const [actionBusyId, setActionBusyId] = useState(null);
   const [actionMsg, setActionMsg] = useState(null);
+  const likeBackInFlight = useRef(false);
 
   const loadAll = useCallback(async () => {
     try {
@@ -42,6 +44,8 @@ export default function LikesPage() {
   }, [loadAll]);
 
   const likeBack = async (fromUserId) => {
+    if (likeBackInFlight.current) return;
+    likeBackInFlight.current = true;
     setActionBusyId(fromUserId);
     setActionMsg(null);
     try {
@@ -59,6 +63,7 @@ export default function LikesPage() {
         text: err.response?.data?.error || err.message || 'Could not like back',
       });
     } finally {
+      likeBackInFlight.current = false;
       setActionBusyId(null);
     }
   };
@@ -160,7 +165,7 @@ export default function LikesPage() {
                     <div className="likes-row card-surface likes-row-inbound">
                       <div
                         className="matches-avatar likes-avatar"
-                        style={{ backgroundImage: `url(${avatarUrl})` }}
+                        style={{ backgroundImage: cssUrlValue(avatarUrl) }}
                         aria-hidden
                       />
                       <div className="likes-row-body">
@@ -212,7 +217,7 @@ export default function LikesPage() {
                   <div className="likes-row card-surface">
                     <div
                       className="matches-avatar likes-avatar"
-                      style={{ backgroundImage: `url(${avatarUrl})` }}
+                      style={{ backgroundImage: cssUrlValue(avatarUrl) }}
                       aria-hidden
                     />
                     <div className="likes-row-body">

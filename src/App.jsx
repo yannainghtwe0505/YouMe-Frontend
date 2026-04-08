@@ -37,10 +37,18 @@ function App() {
         email: d.email,
         displayName: d.name,
       };
-    } catch {
-      localStorage.removeItem('token');
+    } catch (err) {
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+      }
       return null;
     }
+  }, []);
+
+  useEffect(() => {
+    const onAuthLost = () => setUser(null);
+    window.addEventListener('youme:auth-lost', onAuthLost);
+    return () => window.removeEventListener('youme:auth-lost', onAuthLost);
   }, []);
 
   useEffect(() => {
