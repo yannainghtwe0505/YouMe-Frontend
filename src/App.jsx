@@ -14,6 +14,9 @@ function ProtectedRoute({ user, children }) {
   if (!user) {
     return <Navigate to="/login" replace />;
   }
+  if (user.registrationComplete === false) {
+    return <Navigate to="/register" replace />;
+  }
   return children;
 }
 
@@ -36,6 +39,8 @@ function App() {
         userId: d.userId,
         email: d.email,
         displayName: d.name,
+        registrationComplete: d.registrationComplete !== false,
+        onboardingStep: d.onboardingStep ?? '',
       };
     } catch (err) {
       if (err.response?.status === 401) {
@@ -84,6 +89,11 @@ function App() {
       document.title = BASE_TITLE;
       return undefined;
     }
+    if (user.registrationComplete === false) {
+      setMessagesUnread(0);
+      document.title = BASE_TITLE;
+      return undefined;
+    }
     refreshMessagesUnread();
     const id = setInterval(refreshMessagesUnread, 30000);
     const onFocus = () => refreshMessagesUnread();
@@ -95,7 +105,7 @@ function App() {
   }, [user, refreshMessagesUnread, location.pathname]);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || user.registrationComplete === false) {
       document.title = BASE_TITLE;
       return;
     }
@@ -169,12 +179,21 @@ function App() {
             }
           />
           <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-          <Route path="/register" element={<RegisterPage onRegister={handleLogin} />} />
+          <Route
+            path="/register"
+            element={
+              user && user.registrationComplete !== false ? (
+                <Navigate to="/" replace />
+              ) : (
+                <RegisterPage onRegister={handleLogin} />
+              )
+            }
+          />
           <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
         </Routes>
       </div>
 
-      {user && (
+      {user && user.registrationComplete !== false && (
         <nav className="bottom-nav">
           <div className="nav-container">
             <Link to="/" className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}>

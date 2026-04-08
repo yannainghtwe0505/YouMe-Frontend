@@ -16,10 +16,21 @@ export default function LoginPage({ onLogin }) {
     setLoading(true);
 
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', { email: email.trim() || undefined, password });
       localStorage.setItem('token', res.data.token);
-      if (onLogin) onLogin(res.data);
-      navigate('/');
+      const payload = {
+        token: res.data.token,
+        userId: res.data.userId,
+        email,
+        registrationComplete: res.data.registrationComplete !== false,
+        onboardingStep: res.data.onboardingStep ?? '',
+      };
+      if (onLogin) onLogin(payload);
+      if (res.data.registrationComplete === false) {
+        navigate('/register', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Login failed. Please check your credentials.');
     } finally {

@@ -26,7 +26,14 @@ function requestPath(config) {
 }
 
 function isPublicAuthPath(path) {
-  return path === '/auth/login' || path === '/auth/register';
+  if (!path) return false;
+  const p = path.split('?')[0];
+  // Match with or without a gateway prefix (e.g. /api/auth/...).
+  if (/\/auth\/login$/.test(p) || /\/auth\/register$/.test(p)) return true;
+  if (p.includes('/auth/registration/tokyo-wards')) return true;
+  if (p.includes('/auth/registration/email/') || p.includes('/auth/registration/phone/')) return true;
+  if (/\/auth\/registration\/password$/.test(p)) return true;
+  return false;
 }
 
 /**
@@ -47,11 +54,26 @@ function attachBearer(config, token) {
   }
 }
 
+function stripAuthorizationHeader(config) {
+  const HeadersCtor = axios.AxiosHeaders;
+  if (typeof HeadersCtor?.from === 'function') {
+    const h = HeadersCtor.from(config.headers ?? {});
+    h.delete('Authorization');
+    config.headers = h;
+  } else {
+    const h = config.headers && typeof config.headers === 'object' ? { ...config.headers } : {};
+    delete h.Authorization;
+    config.headers = h;
+  }
+}
+
 // Send JWT on every request except login/register (those must not reuse an old token).
 api.interceptors.request.use(
   (config) => {
     const path = requestPath(config);
     if (isPublicAuthPath(path)) {
+      // Stale tokens must not hit registration endpoints (some setups reject invalid Bearer).
+      stripAuthorizationHeader(config);
       return config;
     }
     const token = localStorage.getItem('token');
@@ -74,9 +96,10 @@ api.interceptors.response.use(
   (error) => {
     const status = error.response?.status;
     const onAuthForm = authRequestUrl(error.config);
-    const onLoginPage = window.location.pathname === '/login' || window.location.pathname === '/register';
+    const onAuthPage =
+      window.location.pathname === '/login' || window.location.pathname === '/register';
 
-    if (status === 401 && !onAuthForm && !onLoginPage) {
+    if (status === 401 && !onAuthForm && !onAuthPage) {
       localStorage.removeItem('token');
       window.dispatchEvent(new CustomEvent('youme:auth-lost'));
       return Promise.reject(new Error('Session expired or unauthorized.'));
