@@ -1,0 +1,53 @@
+# Full stack: same as backend/docker-compose.prod.yml — duplicate so a frontend-only
+# repository clone on EC2 still has the file next to the compose deploy step.
+# Sync changes with backend/docker-compose.prod.yml when they diverge.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-DatingAppDB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-DatingAppDB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U DatingAppDB -d DatingAppDB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    image: yannainghtwe/youme-backend:latest
+    pull_policy: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8090}:8090"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SERVER_PORT: "8090"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO:-update}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: ${POSTGRES_DB:-DatingAppDB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-DatingAppDB}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      APP_API_PUBLIC_BASE_URL: ${APP_API_PUBLIC_BASE_URL:-http://localhost:8090}
+      APP_FRONTEND_BASE_URL: ${APP_FRONTEND_BASE_URL:-http://localhost}
+    restart: unless-stopped
+
+  frontend:
+    image: yannainghtwe/youme-frontend:latest
+    pull_policy: always
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    restart: unless-stopped
+
+volumes:
+  pgdata:

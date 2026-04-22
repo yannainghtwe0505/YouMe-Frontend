@@ -1,0 +1,72 @@
+# Frontend-only repository: this file is under frontend/.github/workflows/ (committable when git root = frontend).
+#
+# Secrets: DOCKER_USERNAME, DOCKER_PASSWORD, EC2_IP, EC2_KEY
+# Optional: EC2_USER, EC2_DEPLOY_DIR, EC2_SSH_KNOWN_HOSTS, PUBLIC_APP_URL, WS_URL
+# EC2 must have docker, compose, and docker-compose.prod.yml + .env in EC2_DEPLOY_DIR
+# (same as backend deploy; you can keep one clone of a monorepo or copy compose from backend repo).
+
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: true
+
+env:
+  IMAGE: yannainghtwe/youme-frontend:latest
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push
+        env:
+          PUBLIC_APP_URL: ${{ secrets.PUBLIC_APP_URL }}
+          WS_URL: ${{ secrets.WS_URL }}
+        run: |
+          set -e
+          BUILD_ARGS=(--build-arg "VITE_API_URL=/api")
+          [ -n "$PUBLIC_APP_URL" ] && BUILD_ARGS+=(--build-arg "VITE_PUBLIC_APP_URL=$PUBLIC_APP_URL")
+          [ -n "$WS_URL" ] && BUILD_ARGS+=(--build-arg "VITE_WS_URL=$WS_URL")
+          docker build "${BUILD_ARGS[@]}" -f Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+        shell: bash
+
+      - name: Install SSH key
+        env:
+          EC2_SSH_KNOWN_HOSTS: ${{ secrets.EC2_SSH_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          umask 077
+          echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
+          if [ -n "$EC2_SSH_KNOWN_HOSTS" ]; then
+            echo "$EC2_SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          fi
+
+      - name: Deploy on EC2
+        env:
+          EC2_USER_IN: ${{ secrets.EC2_USER }}
+          EC2_DEPLOY_IN: ${{ secrets.EC2_DEPLOY_DIR }}
+        run: |
+          set -e
+          EC2_USER="${EC2_USER_IN:-ec2-user}"
+          DEPLOY_DIR="${EC2_DEPLOY_IN:-/home/${EC2_USER}/dating-app}"
+          REMOTE="cd $DEPLOY_DIR && docker pull $IMAGE && (docker compose -f docker-compose.prod.yml up -d --no-build frontend || docker-compose -f docker-compose.prod.yml up -d --no-build frontend)"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "${EC2_USER}@${{ secrets.EC2_IP }}" "$REMOTE"
+        shell: bash
