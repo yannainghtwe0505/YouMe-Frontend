@@ -1,0 +1,742 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "back": "Back",
+    "continue": "Continue",
+    "saving": "Saving…",
+    "sending": "Sending…",
+    "checking": "Checking…",
+    "or": "OR",
+    "any": "Any",
+    "optional": "(optional)",
+    "selectPlaceholder": "Select…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "deleting": "Deleting…",
+    "delete": "Delete"
+  },
+  "app": {
+    "title": "YouMe",
+    "titleUnread": "({{count}}) YouMe"
+  },
+  "errors": {
+    "generic": "Something went wrong.",
+    "requestFailed": "Request failed."
+  },
+  "lang": {
+    "chooseTitle": "Choose your language",
+    "chooseSubtitle": "You can change this anytime. We never translate what you or others write.",
+    "detectedHint": "Suggested from your device: {{label}}. Tap another if you prefer.",
+    "suggested": "Suggested",
+    "privacyNote": "Profile text and chat stay in the language people wrote them in.",
+    "continue": "Continue",
+    "changeLink": "Language"
+  },
+  "auth": {
+    "loginTitle": "Welcome back to YouMe",
+    "loginSubtitle": "Sign in to pick up your chats and discover new people.",
+    "emailOrPhoneLabel": "Email or phone",
+    "emailOrPhonePlaceholder": "Email or Japan mobile (e.g. 090-1234-5678)",
+    "emailOrPhoneHint": "Use the same email or Japan mobile you used to register. Phone sign-in only works if you signed up with a phone number (any common format is fine).",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "signIn": "Sign In",
+    "signingIn": "Signing in…",
+    "noAccount": "Don't have an account?",
+    "createAccount": "Create one now!",
+    "validationLoginId": "Enter your email or phone number.",
+    "errorGeneric": "Login failed. Please check your credentials."
+  },
+  "register": {
+    "stepProgress": "Step {{phase}} of {{total}}",
+    "sendCode": "Send code",
+    "verify": "Verify",
+    "creatingAccount": "Creating account…",
+    "createAccount": "Create account",
+    "continueWithPhone": "Continue with phone",
+    "signUpEmailOnly": "Sign up with email only",
+    "codeSentPrefix": "Code sent.",
+    "digitCodeLabel": "6-digit code",
+    "codePlaceholder": "••••••",
+    "methodError": "Go back and choose Email or Phone.",
+    "resendCode": "Resend code",
+    "booting": "Loading your sign-up…",
+    "methodIntro": "Sign up with your Japan phone number. You can add an email later (optional). We’ll text you a code.",
+    "confirmPassword": "Confirm password",
+    "genderPrompt": "How do you identify?",
+    "mustBe18": "You must be 18 or older.",
+    "footerHasAccount": "Already have an account?",
+    "footerSignIn": "Sign in",
+    "done": {
+      "headline": "You’re in!",
+      "redirect": "Taking you to Discover…"
+    },
+    "postSend": {
+      "email": "Check your inbox (and spam). The code is sent by email when SMTP is configured.",
+      "phone": "Check your phone for a text message. If SMS isn’t configured yet, your server may log the code instead."
+    },
+    "title": {
+      "method": "Join YouMe",
+      "contact": "Verify it’s you",
+      "verify": "Verify it’s you",
+      "password": "Set your password",
+      "gender": "Gender",
+      "birthday": "Birthday",
+      "location": "Tokyo area",
+      "nickname": "Your nickname",
+      "legal": "Terms & safety",
+      "basics": "About you",
+      "interests": "Interests",
+      "attribution": "Almost there",
+      "photos": "Photos",
+      "done": "Welcome",
+      "fallback": "Sign up"
+    },
+    "contact": {
+      "emailLabel": "📧 Email",
+      "phoneLabel": "📱 Mobile number",
+      "emailPlaceholder": "you@example.com",
+      "phonePlaceholder": "090-1234-5678",
+      "optionalEmailLabel": "📧 Email",
+      "optionalEmailHint": "Add an email for receipts and account recovery. You sign in with your phone number (or this email if you add it).",
+      "hintPhone": "We’ll send a 6-digit code by SMS to this number (Twilio when configured). You can use a dev OTP from server logs if SMS isn’t set up yet.",
+      "hintEmail": "We’ll send a 6-digit code by email when SMTP is configured. Otherwise check server logs or use a configured dev OTP."
+    },
+    "nickname": {
+      "label": "Nickname",
+      "publicHint": "(your public name)",
+      "description": "This is the name shown on your profile and to other members.",
+      "placeholder": "e.g. Yuki"
+    },
+    "placeholder": {
+      "searchWard": "Search ward / city…"
+    },
+    "legal": {
+      "over18": "I am 18 or older",
+      "tos": "I agree to the Terms of Service",
+      "privacy": "I agree to the Privacy Policy"
+    },
+    "basics": {
+      "height": "Height (cm)",
+      "educationPlaceholder": "e.g. University",
+      "occupation": "Occupation",
+      "occupationPlaceholder": "e.g. Engineer",
+      "annualIncome": "Annual income",
+      "relationshipIntention": "Relationship intention",
+      "livingSituation": "Living situation"
+    },
+    "income": {
+      "preferNot": "Prefer not to say",
+      "under4m": "Under ¥4M",
+      "m4_6m": "¥4M – ¥6M",
+      "m6_8m": "¥6M – ¥8M",
+      "m8_10m": "¥8M – ¥10M",
+      "over10m": "¥10M+"
+    },
+    "relInt": {
+      "casual": "Casual dating",
+      "serious": "Serious / marriage-minded",
+      "open": "Open to both"
+    },
+    "onboardDrinking": {
+      "never": "Never",
+      "sometimes": "Sometimes",
+      "often": "Often"
+    },
+    "onboardSmoking": {
+      "no": "No",
+      "social": "Socially",
+      "yes": "Yes"
+    },
+    "living": {
+      "alone": "Live alone",
+      "family": "With family",
+      "roommates": "Roommates",
+      "other": "Other"
+    },
+    "interests": {
+      "searchPlaceholder": "Search interests…"
+    },
+    "hobbyPreset": {
+      "travel": "Travel",
+      "gym": "Gym",
+      "anime": "Anime",
+      "movies": "Movies",
+      "reading": "Reading",
+      "music": "Music",
+      "cafe": "Café",
+      "hiking": "Hiking",
+      "cooking": "Cooking",
+      "gaming": "Gaming"
+    },
+    "attribution": {
+      "prompt": "How did you find YouMe? (optional)"
+    },
+    "referral": {
+      "TIKTOK": "TikTok",
+      "INSTAGRAM": "Instagram",
+      "FRIEND": "Friend",
+      "YOUTUBE": "YouTube",
+      "GOOGLE": "Google Search",
+      "STORE": "App Store / Play Store",
+      "AD": "Advertisement",
+      "OTHER": "Other"
+    },
+    "photos": {
+      "intro": "Add at least one clear photo. The first photo is your main profile picture. This is the last step — then your account is created.",
+      "mainBadge": "Main"
+    },
+    "error": {
+      "imagesOnly": "Please choose image files only (JPEG, PNG, WebP, etc.).",
+      "photoTooLarge": "Each photo must be 5 MB or smaller.",
+      "chooseVerifyMethod": "Go back and choose how to verify.",
+      "enterEmail": "Enter your email address.",
+      "enterPhone": "Enter your phone number.",
+      "invalidEmail": "Enter a valid email address.",
+      "optionalEmailInvalid": "Optional email doesn’t look valid.",
+      "enterSixDigit": "Enter the 6-digit code.",
+      "passwordMismatch": "Passwords do not match",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "addOnePhoto": "Add at least one profile photo to continue.",
+      "enterBirthday": "Please enter your birthday.",
+      "nicknameLength": "Nickname must be 2–30 characters.",
+      "heightRange": "Enter a valid height between 120 and 230 cm.",
+      "completeBasics": "Please complete relationship intention, drinking, smoking, and living situation."
+    }
+  },
+  "feed": {
+    "loading": "Finding people near you…",
+    "errorTitle": "Unable to load discover",
+    "tryAgain": "Try again",
+    "errorGeneric": "Request failed",
+    "empty": {
+      "caughtUp": "You’re all caught up",
+      "limitedBefore": "Strong discovery filters (distance, age, modes, or deal-breakers) may be hiding everyone. Loosen filters in",
+      "limitedAfter": "and refresh.",
+      "default": "Passes and likes clear from this list. Check back later or refresh.",
+      "refreshDeck": "Refresh deck"
+    },
+    "match": {
+      "title": "It’s a match!",
+      "body": "You and {{name}} liked each other.",
+      "sendMessage": "Send a message",
+      "goMessages": "Go to messages",
+      "keepSwiping": "Keep swiping",
+      "someone": "Someone"
+    },
+    "header": {
+      "subtitle": "Swipe-style matching — pass, like, or super like",
+      "radiusWithLocation": "Within ~{{km}} km — adjust with the filter button",
+      "radiusNoLocation": "~{{km}} km selected — add your location in Discovery settings for this to apply"
+    },
+    "card": {
+      "teaserNext": "Say hi and see where it goes.",
+      "teaserCurrent": "Excited to meet people and create great stories."
+    },
+    "viewFullProfile": "View full profile",
+    "action": {
+      "pass": "Pass",
+      "superLike": "Super Like",
+      "like": "Like"
+    },
+    "detail": {
+      "member": "Member",
+      "looking": {
+        "ageRange": "Ages {{min}}–{{max}}",
+        "fromAge": "From age {{min}}",
+        "upToAge": "Up to age {{max}}",
+        "withinKm": "Within ~{{km}} km"
+      },
+      "distanceFromYou": "About {{km}} km from you",
+      "distanceKmOnly": "{{km}} km",
+      "section": {
+        "about": "About me",
+        "essentials": "Essentials",
+        "lifestyle": "Lifestyle"
+      },
+      "row": {
+        "distance": "Distance",
+        "member": "Member",
+        "languages": "Languages"
+      },
+      "premium": "Premium",
+      "sparseProfile": "They haven’t added much yet — start a chat after you match to learn more.",
+      "closeProfile": "Close profile details",
+      "photoNumber": "Photo {{n}}"
+    }
+  },
+  "discover": {
+    "kmAway": "{{km}} km away",
+    "locationPin": "{{place}}",
+    "openToChat": "Open to chat",
+    "prevPhoto": "Previous photo",
+    "nextPhoto": "Next photo",
+    "photosAria": "Photos",
+    "mode": {
+      "for_you": "For You",
+      "double_date": "Double Date",
+      "astrology": "Astrology",
+      "music": "Music"
+    },
+    "interestedIn": {
+      "men": "Men",
+      "women": "Women",
+      "nonbinary": "Non-binary"
+    },
+    "langName": {
+      "english": "English",
+      "japanese": "Japanese",
+      "spanish": "Spanish",
+      "french": "French",
+      "korean": "Korean",
+      "mandarin": "Mandarin",
+      "hindi": "Hindi",
+      "portuguese": "Portuguese",
+      "german": "German",
+      "arabic": "Arabic"
+    },
+    "settings": {
+      "title": "Discovery settings",
+      "saveAndCloseAria": "Save and close",
+      "tabShowMe": "Show me",
+      "tabMyProfile": "My profile",
+      "leadShow": "Control which people appear in Discover. Stricter filters mean fewer profiles — you can loosen distance or age when you run out (below).",
+      "leadMy": "These details let other people filter fairly — add what you’re comfortable sharing.",
+      "modes": "Modes",
+      "modesAria": "Discover mode",
+      "modesHint": "Others choose modes they want to appear in on the My profile tab.",
+      "interestedIn": "Interested in",
+      "interestedInHint": "Leave all off to include every gender.",
+      "ageRange": "Age range",
+      "minAge": "Minimum age",
+      "maxAge": "Maximum age",
+      "limitDistance": "Limit maximum distance",
+      "maxDistance": "Maximum distance",
+      "kmValue": "{{km}} km",
+      "requireBio": "Has a bio",
+      "expandDistance": "Show people further away if I run out of nearby profiles",
+      "expandAge": "Show people slightly outside my age range if I run out",
+      "minPhotosTitle": "Minimum photos in profile",
+      "minPhotosLabel": "At least this many photos",
+      "narrowTitle": "Narrow by their profile",
+      "narrowHint": "Only people who match these (they fill details on My profile). Leave “Any” to skip.",
+      "langTheySpeak": "Languages they speak (any match)",
+      "langYouSpeak": "Languages you speak",
+      "mustShareInterest": "Must share interest tag",
+      "mustShareInterestPlaceholder": "e.g. Hiking",
+      "yourPosition": "Your position",
+      "positionOk": "Saved — needed for distance sorting and filters.",
+      "positionWarn": "Add your position to use distance limits accurately.",
+      "findingYou": "Finding you…",
+      "useLocation": "Use my current location",
+      "appearInModes": "Appear in these modes",
+      "aboutYou": "About you",
+      "cancel": "Cancel",
+      "save": "Save",
+      "errorLoad": "Could not load your settings.",
+      "errorSave": "Could not save",
+      "geoNotSupported": "Location is not supported in this browser.",
+      "geoSaveFailed": "Could not save location",
+      "geoPermission": "Could not read your location. Check browser permissions.",
+      "filter": {
+        "lookingFor": "Looking for",
+        "zodiac": "Zodiac",
+        "education": "Education",
+        "familyPlans": "Family plans",
+        "communicationStyle": "Communication style",
+        "loveStyle": "Love style",
+        "pets": "Pets",
+        "drinking": "Drinking",
+        "smoking": "Smoking",
+        "workout": "Workout",
+        "socialMedia": "Social media"
+      }
+    },
+    "options": {
+      "lookingFor": {
+        "any": "Any",
+        "longTerm": "Long-term partner",
+        "shortTerm": "Short-term fun",
+        "newFriends": "New friends",
+        "figuring": "Still figuring it out"
+      },
+      "zodiac": {
+        "any": "Any",
+        "aries": "Aries",
+        "taurus": "Taurus",
+        "gemini": "Gemini",
+        "cancer": "Cancer",
+        "leo": "Leo",
+        "virgo": "Virgo",
+        "libra": "Libra",
+        "scorpio": "Scorpio",
+        "sagittarius": "Sagittarius",
+        "capricorn": "Capricorn",
+        "aquarius": "Aquarius",
+        "pisces": "Pisces"
+      },
+      "education": {
+        "any": "Any",
+        "highSchool": "High school",
+        "tradeSchool": "Trade school",
+        "inCollege": "In college",
+        "undergrad": "Undergraduate degree",
+        "graduate": "Graduate degree"
+      },
+      "familyPlans": {
+        "any": "Any",
+        "wantChildren": "Want children",
+        "noChildren": "Do not want children",
+        "openChildren": "Open to children",
+        "notSure": "Not sure yet"
+      },
+      "communicationStyle": {
+        "any": "Any",
+        "bigTexter": "Big texter",
+        "badTexter": "Bad texter",
+        "phoneCaller": "Phone caller",
+        "videoChatter": "Video chatter",
+        "meetOften": "Meet in person often"
+      },
+      "loveStyle": {
+        "any": "Any",
+        "timeTogether": "Time together",
+        "touch": "Touch",
+        "compliments": "Compliments",
+        "gifts": "Gifts",
+        "actsOfService": "Acts of service"
+      },
+      "pets": {
+        "any": "Any",
+        "dog": "Dog",
+        "cat": "Cat",
+        "otherPets": "Other pets",
+        "wantPet": "Want a pet",
+        "allergic": "Allergic",
+        "noPets": "No pets"
+      },
+      "drinking": {
+        "any": "Any",
+        "never": "Never",
+        "sober": "Sober",
+        "socially": "Socially",
+        "specialOccasions": "On special occasions",
+        "mostWeekends": "Most weekends"
+      },
+      "smoking": {
+        "any": "Any",
+        "nonSmoker": "Non-smoker",
+        "occasional": "Occasional",
+        "smoker": "Smoker",
+        "tryingToQuit": "Trying to quit"
+      },
+      "workout": {
+        "any": "Any",
+        "everyDay": "Every day",
+        "often": "Often",
+        "sometimes": "Sometimes",
+        "rarely": "Rarely"
+      },
+      "socialMedia": {
+        "any": "Any",
+        "passiveScroller": "Passive scroller",
+        "influencer": "Influencer",
+        "offTheGrid": "Off the grid"
+      }
+    }
+  },
+  "matches": {
+    "loading": "Loading conversations…",
+    "errorLoad": "Could not load conversations",
+    "title": "Messages",
+    "subtitle": "Chats with people you matched with",
+    "emptyTitle": "No conversations yet",
+    "emptyBody": "When you match with someone on Discover, they will show up here.",
+    "goDiscover": "Go to Discover",
+    "previewEmpty": "No messages yet",
+    "peerFallback": "Match",
+    "unreadAria": "{{count}} unread"
+  },
+  "likes": {
+    "loading": "Loading likes…",
+    "errorLoad": "Could not load likes.",
+    "title": "Likes",
+    "introLine1": "YouMe uses two simple lists.",
+    "introLine2": "“Liked you” is people who liked you on Discover first—like them back here to match in one tap.",
+    "introLine3": "“You liked” is people you liked first; when they like you back, you will connect under Messages.",
+    "tabLikedYou": "Liked you",
+    "tabYouLiked": "You liked",
+    "emptyInboundTitle": "No one has liked you yet",
+    "emptyInboundBody": "When someone likes you on Discover before you like them, they appear here so you can like back and match.",
+    "emptyOutboundTitle": "You haven’t liked anyone yet",
+    "emptyOutboundBody": "Tap the heart on Discover to show interest. People you liked stay here until you match or they like you back.",
+    "goDiscover": "Go to Discover",
+    "countChoseYou_one": "1 person liked you",
+    "countChoseYou_other": "{{count}} people liked you",
+    "countYouLiked_one": "1 person",
+    "countYouLiked_other": "{{count}} people",
+    "statusSuperLikedYou": "⭐ Super liked you",
+    "statusLikedYou": "❤️ Liked you",
+    "likeBack": "Like back",
+    "statusMatched": "Matched — you can message",
+    "statusSuperWaiting": "Super like sent — waiting on them",
+    "statusLikedWaiting": "Liked — waiting on them",
+    "message": "Message",
+    "toastMatchOpening": "It’s a match! Opening chat…",
+    "toastLikeSent": "Like sent — if they like you too, you will match.",
+    "toastLikeBackErr": "Could not like back",
+    "freeUpgradeTitle": "See who liked you",
+    "freeUpgradeBody": "Upgrade to Plus or Gold to see who liked you.",
+    "lockedPreviewHint": "Preview only — identities are hidden on the Free plan.",
+    "anonymousMember": "Someone",
+    "statusLikedYouBlurred": "Liked you",
+    "goldTeaser": "Gold: priority visibility and more perks for your likes.",
+    "discoverLink": "Open Discover"
+  },
+  "photos": {
+    "title": "Photos",
+    "subtitle": "Up to {{max}} photos — shown on your profile and in Discover.",
+    "backToProfile": "Back to profile",
+    "count": "{{count}} / {{max}}",
+    "add": "Add photo",
+    "uploading": "Uploading…",
+    "atLimit": "Photo limit reached",
+    "loading": "Loading photos…",
+    "mainBadge": "Main",
+    "primaryTooltip": "Primary photo",
+    "makeMain": "Make main",
+    "remove": "Remove",
+    "confirmRemove": "Remove this photo?",
+    "errorMaxPhotos": "You already have {{max}} photos. Remove one before adding another.",
+    "errorInvalidResponse": "Invalid response from server.",
+    "errorUploadFailed": "Upload failed ({{status}}). Check storage configuration."
+  },
+  "nav": {
+    "discover": "Discover",
+    "likes": "Likes",
+    "messages": "Messages",
+    "profile": "Profile"
+  },
+  "profile": {
+    "loading": "Loading your profile...",
+    "loadError": "Unable to load profile",
+    "createTitle": "Create Your Profile",
+    "editProfile": "Edit profile",
+    "email": "Email",
+    "age": "Age",
+    "birthday": "Birthday",
+    "gender": "Gender",
+    "genderPlaceholder": "Select",
+    "genderMale": "Male",
+    "genderFemale": "Female",
+    "interests": "Interests",
+    "interestsHint": "Comma-separated tags",
+    "location": "Location",
+    "discoverRadius": "Discover radius (km)",
+    "education": "Education",
+    "work": "Work",
+    "hobby": "Hobbies",
+    "bio": "Bio",
+    "photosLink": "Photos",
+    "premium": "YouMe Premium",
+    "freePlan": "Free plan",
+    "planFree": "YouMe Free",
+    "planPlus": "YouMe Plus",
+    "planGold": "YouMe Gold",
+    "upgradeToPlus": "Upgrade to Plus",
+    "upgradeToGold": "Upgrade to Gold",
+    "language": "Language",
+    "langEn": "English",
+    "langJa": "日本語",
+    "langMy": "မြန်မာ",
+    "aiTipsTitle": "AI profile coach",
+    "aiTipsButton": "Get improvement tips",
+    "aiTipsHint": "Uses your Profile AI daily quota (separate from chat reply ideas) when the model is configured.",
+    "aiTipsLoading": "Getting suggestions…",
+    "aiQuota": "{{remaining}} / {{limit}} uses left today",
+    "aiQuotaFairUse": "{{remaining}} / {{limit}} left today (fair-use cap)",
+    "quotaExhausted": "Daily AI coach limit reached. Try tomorrow or go Premium.",
+    "tipDefaultTitle": "Tip",
+    "validationAgeOrBirthday": "Enter your birthday or age.",
+    "placeholderNickname": "Nickname (public name)",
+    "placeholderLocation": "City or area",
+    "placeholderDistance": "Max discover distance (km, e.g. 10)",
+    "placeholderDistanceEdit": "Max discover distance (km)",
+    "placeholderEducation": "School or field",
+    "placeholderWork": "Job title or field",
+    "placeholderHobby": "Hobbies (comma-separated)",
+    "placeholderBio": "Tell people about you",
+    "geoGetting": "Getting location…",
+    "geoUseLocation": "Use my current location",
+    "geoWillSave": "Will save: {{lat}}, {{lon}}",
+    "geoCoordsOnSave": "Coordinates saved on next save: {{lat}}, {{lon}}",
+    "geoPositionHelp": "Sharing your position helps show approximate distance to others in Discover.",
+    "geoNotSupported": "Location is not supported in this browser.",
+    "geoPermissionDenied": "Could not read your location. Check browser permissions.",
+    "createProfile": "Create profile",
+    "creating": "Creating…",
+    "missingProfileTitle": "Profile not found",
+    "missingProfileHint": "Try signing in again or create a new account.",
+    "photosAria": "Profile photos",
+    "quickLinksAria": "Profile shortcuts",
+    "yourProfileTitle": "Your profile",
+    "valueNotSet": "Not set",
+    "mapPositionLabel": "Map position",
+    "mapPositionValue": "Saved (used for distance in Discover)",
+    "noBioYet": "No bio yet.",
+    "upgradePremium": "Upgrade to Premium",
+    "logOut": "Log out",
+    "accountSecurity": "Account & security",
+    "changePassword": "Change password",
+    "currentPasswordPlaceholder": "Current password",
+    "newPasswordPlaceholder": "New password (min 6 characters)",
+    "updatePassword": "Update password",
+    "savingPassword": "Saving…",
+    "deleteAccount": "Delete account",
+    "deleteHint": "Type your account email to confirm.",
+    "deleteEmailPlaceholder": "Your email",
+    "deleteMyAccount": "Delete my account",
+    "fetchFailed": "Could not fetch profile",
+    "updateFailed": "Could not update profile",
+    "createFailed": "Could not create profile",
+    "upgradeFailed": "Upgrade failed",
+    "pwdTooShort": "New password must be at least 6 characters.",
+    "pwdUpdated": "Password updated.",
+    "pwdChangeFailed": "Could not change password",
+    "deleteEmailMismatch": "Type your email exactly to confirm deletion.",
+    "deleteConfirm": "Permanently delete your account and all data? This cannot be undone.",
+    "deleteFailed": "Could not delete account",
+    "upgradePlansLink": "Compare plans & upgrade"
+  },
+  "subscription": {
+    "pageTitle": "Upgrade plan",
+    "backToProfile": "Back to profile",
+    "currentPlanLabel": "Your current plan",
+    "currentPlanBadge": "Current plan",
+    "billingMonthly": "Billed monthly",
+    "perMonth": "{{price}} / month",
+    "freePrice": "Free",
+    "includes": "What you can do",
+    "limitations": "Limitations",
+    "compareTitle": "Compare features",
+    "compareFeature": "Feature",
+    "compareFree": "Free",
+    "comparePlus": "Plus",
+    "compareGold": "Gold",
+    "badgePopular": "Popular",
+    "badgeRecommended": "Recommended",
+    "upgradeToPlus": "Upgrade to Plus",
+    "upgradeToGold": "Upgrade to Gold",
+    "currentPlanCta": "Current plan",
+    "lowerTier": "Lower tier",
+    "loading": "Loading plans…",
+    "loadError": "Could not load subscription options.",
+    "modalTitle": "Confirm upgrade",
+    "modalPlan": "Plan",
+    "modalPrice": "Price",
+    "modalBilling": "Billing",
+    "modalConfirm": "Continue",
+    "modalCancel": "Cancel",
+    "checkoutContinue": "Continue to secure checkout",
+    "demoActivate": "Activate plan (no payment configured)",
+    "paymentFailed": "Payment failed. Please try again.",
+    "canceledHint": "Checkout was canceled. You can try again anytime.",
+    "successTitle": "Welcome to your new plan",
+    "successMessage": "You are now on the {{plan}} plan 🎉",
+    "successBack": "Back to profile",
+    "successWorking": "Confirming your subscription…",
+    "successError": "We could not confirm payment. Return to plans and try again.",
+    "planCards": {
+      "FREE": {
+        "includes": [
+          "Discover, like, and match",
+          "Limited AI reply suggestions each day",
+          "Basic profile AI help"
+        ],
+        "limitations": [
+          "No advanced chat insights",
+          "No Gold-level smart matching depth",
+          "Lower daily AI quotas"
+        ]
+      },
+      "PLUS": {
+        "includes": [
+          "Higher daily limits for AI replies and coach",
+          "Smart matching and match greetings",
+          "Chat insights up to your plan quota"
+        ],
+        "limitations": [
+          "Not unlimited — still subject to daily caps",
+          "No Gold fair-use ceiling for power users"
+        ]
+      },
+      "GOLD": {
+        "includes": [
+          "Highest fair-use daily caps across AI features",
+          "Priority depth for smart matching signals",
+          "Full advanced AI feature access within policy"
+        ],
+        "limitations": [
+          "Fair-use policy still applies for platform stability",
+          "Does not bypass safety or community rules"
+        ]
+      }
+    },
+    "lifecycleHint": "Status: {{status}} · Billing: {{provider}}",
+    "manageTitle": "Manage subscription",
+    "cancelScheduledNote": "Your plan stays active until the end of the current billing period.",
+    "cancelAtPeriodEnd": "Cancel at end of period",
+    "cancelImmediately": "Cancel now",
+    "downgradeToPlusStripe": "Downgrade to Plus",
+    "nativeBillingManage": "This plan was purchased on the App Store or Google Play. Manage or cancel in your device subscription settings.",
+    "nativeRestoreHint": "Reinstalled the app? Use Restore purchases in the mobile app after signing in.",
+    "demoBillingManage": "This tier is active without a payment provider (development / demo). You can reset to Free below.",
+    "demoResetFree": "Reset to Free",
+    "compare": {
+      "aiReplies": "AI reply suggestions (daily)",
+      "profileAi": "Profile AI / advanced coach",
+      "matchGreetings": "Smart match greetings",
+      "chatInsights": "Chat insights",
+      "smartMatching": "Smart matching",
+      "dailyAiQuota": "Primary AI reply quota"
+    }
+  },
+  "messages": {
+    "loading": "Loading messages...",
+    "aiReplyIdeas": "AI reply ideas",
+    "aiPowered": "Powered by your configured model.",
+    "aiTemplates": "Templates when no API key is set.",
+    "aiQuotaBadge": "{{remaining}} left today",
+    "aiFairUseNote": "(fair-use cap)",
+    "suggestionsHeading": "Tap a suggestion to paste into your message",
+    "suggestionType": {
+      "emotional_support": "Support",
+      "advice": "Advice",
+      "casual": "Casual",
+      "flirty": "Flirty",
+      "question": "Question",
+      "suggestion": "Suggestion"
+    },
+    "quotaError": "AI limit reached for today.",
+    "gettingIdeas": "Getting ideas…",
+    "backToListAria": "Back to conversations",
+    "chatFallbackTitle": "Chat",
+    "matched": "Matched",
+    "matchNumber": "Match #{{id}}",
+    "aiTipsBadge": "AI tips",
+    "assistantLabel": "YouMe coach",
+    "emptyThread": "Say hi — a short YouMe coach note may appear when you match (and loads in real time).",
+    "composerPlaceholder": "Type a message…",
+    "send": "Send",
+    "sending": "Sending…",
+    "errorForbidden": "You are not part of this match.",
+    "errorLoadMessages": "Failed to load messages",
+    "errorSend": "Failed to send message",
+    "confirmUnmatch": "Unmatch and delete this conversation?",
+    "errorUnmatch": "Could not unmatch",
+    "confirmBlock": "Block this person? They will disappear from Discover and you will not be able to message each other.",
+    "errorBlock": "Could not block user",
+    "menuUnmatch": "Unmatch",
+    "menuBlock": "Block"
+  }
+}

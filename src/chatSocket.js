@@ -1,23 +1,22 @@
+import { API_BASE_URL, WS_URL } from './config/urls.js';
+
 /**
  * Real-time chat: connects to Spring WebSocket /ws/chat with JWT in query string.
  */
 
 function deriveWsBase() {
-  const explicit = import.meta.env.VITE_WS_URL;
-  if (explicit) {
-    return String(explicit).replace(/\/$/, '');
+  if (WS_URL) {
+    return WS_URL.replace(/\/$/, '');
   }
-  const api = import.meta.env.VITE_API_URL || 'http://localhost:8090';
-  try {
-    const u = new URL(api);
-    u.protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
-    u.pathname = '/ws/chat';
-    u.search = '';
-    u.hash = '';
-    return u.toString().replace(/\/$/, '');
-  } catch {
-    return 'ws://localhost:8090/ws/chat';
-  }
+  const base = API_BASE_URL;
+  const u = base.startsWith('/')
+    ? new URL(base, typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
+    : new URL(base);
+  u.protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
+  u.pathname = '/ws/chat';
+  u.search = '';
+  u.hash = '';
+  return u.toString().replace(/\/$/, '');
 }
 
 /**

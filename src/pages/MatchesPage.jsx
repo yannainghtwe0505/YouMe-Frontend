@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { cssUrlValue } from '../imageUtils';
 
@@ -18,6 +19,7 @@ function formatMessageTime(iso) {
 }
 
 export default function MatchesPage() {
+  const { t } = useTranslation();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,18 +35,18 @@ export default function MatchesPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err.response?.data?.error || 'Could not load conversations');
+          setError(err.response?.data?.error || t('matches.errorLoad'));
           setLoading(false);
         }
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [t]);
 
   if (loading) {
     return (
       <div className="loading fade-in">
-        <div className="pulse">Loading conversations…</div>
+        <div className="pulse">{t('matches.loading')}</div>
       </div>
     );
   }
@@ -52,8 +54,8 @@ export default function MatchesPage() {
   return (
     <div className="fade-in matches-hub">
       <header className="matches-hub-header">
-        <h1>Messages</h1>
-        <p>Chats with people you matched with</p>
+        <h1>{t('matches.title')}</h1>
+        <p>{t('matches.subtitle')}</p>
       </header>
 
       {error && (
@@ -63,15 +65,15 @@ export default function MatchesPage() {
       {matches.length === 0 ? (
         <div className="matches-hub-empty card card-surface">
           <span className="matches-hub-empty-icon" aria-hidden>💬</span>
-          <h2>No conversations yet</h2>
-          <p>When you match with someone on Discover, they will show up here.</p>
-          <Link to="/" className="btn btn-primary">Go to Discover</Link>
+          <h2>{t('matches.emptyTitle')}</h2>
+          <p>{t('matches.emptyBody')}</p>
+          <Link to="/" className="btn btn-primary">{t('matches.goDiscover')}</Link>
         </div>
       ) : (
         <ul className="matches-list">
           {matches.map((m) => {
             const unread = Number(m.unreadCount) || 0;
-            const preview = m.lastMessageBody || 'No messages yet';
+            const preview = m.lastMessageBody ? m.lastMessageBody : t('matches.previewEmpty');
             const timeLabel = formatMessageTime(m.lastMessageAt);
             return (
               <li key={m.matchId}>
@@ -84,7 +86,7 @@ export default function MatchesPage() {
                   />
                   <div className="matches-row-text">
                     <div className="matches-row-topline">
-                      <span className="matches-name">{m.peerName || 'Match'}</span>
+                      <span className="matches-name">{m.peerName || t('matches.peerFallback')}</span>
                       {timeLabel ? (
                         <span className="matches-time">{timeLabel}</span>
                       ) : null}
@@ -95,7 +97,7 @@ export default function MatchesPage() {
                   </div>
                   <div className="matches-row-right">
                     {unread > 0 ? (
-                      <span className="matches-unread-badge" aria-label={`${unread} unread`}>
+                      <span className="matches-unread-badge" aria-label={t('matches.unreadAria', { count: unread })}>
                         {unread > 99 ? '99+' : unread}
                       </span>
                     ) : null}

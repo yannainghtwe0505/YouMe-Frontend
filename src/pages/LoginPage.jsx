@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 
 export default function LoginPage({ onLogin }) {
-  const [email, setEmail] = useState('');
+  const { t } = useTranslation();
+  const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -16,12 +18,23 @@ export default function LoginPage({ onLogin }) {
     setLoading(true);
 
     try {
-      const res = await api.post('/auth/login', { email: email.trim() || undefined, password });
+      const id = loginId.trim();
+      if (!id) {
+        setError(t('auth.validationLoginId'));
+        setLoading(false);
+        return;
+      }
+      const looksLikeEmail = id.includes('@');
+      const res = await api.post('/auth/login', {
+        email: looksLikeEmail ? id : undefined,
+        phone: looksLikeEmail ? undefined : id,
+        password,
+      });
       localStorage.setItem('token', res.data.token);
       const payload = {
         token: res.data.token,
         userId: res.data.userId,
-        email,
+        email: looksLikeEmail ? id : null,
         registrationComplete: res.data.registrationComplete !== false,
         onboardingStep: res.data.onboardingStep ?? '',
       };
@@ -32,7 +45,7 @@ export default function LoginPage({ onLogin }) {
         navigate('/', { replace: true });
       }
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Login failed. Please check your credentials.');
+      setError(err.response?.data?.error || err.message || t('auth.errorGeneric'));
     } finally {
       setLoading(false);
     }
@@ -46,73 +59,79 @@ export default function LoginPage({ onLogin }) {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '16px',
-        background: 'var(--bg-gradient-auth)'
+        background: 'var(--bg-gradient-auth)',
       }}
     >
       <div className="fade-in" style={{ width: '100%', maxWidth: '420px' }}>
-        {/* Header */}
         <div className="auth-hero-stagger" style={{ textAlign: 'center', marginBottom: '40px' }}>
           <div style={{
             fontSize: '3rem',
-            marginBottom: '16px'
-          }}>❤️</div>
+            marginBottom: '16px',
+          }}
+          >❤️</div>
           <h1 style={{
             fontSize: 'clamp(1.5rem, 5vw, 2rem)',
             fontWeight: '700',
             color: 'var(--text-primary)',
-            marginBottom: '8px'
-          }}>
-            Welcome back to YouMe
+            marginBottom: '8px',
+          }}
+          >
+            {t('auth.loginTitle')}
           </h1>
           <p style={{
             color: 'var(--text-secondary)',
-            fontSize: '0.95rem'
-          }}>
-            Sign in to pick up your chats and discover new people.
+            fontSize: '0.95rem',
+          }}
+          >
+            {t('auth.loginSubtitle')}
           </p>
         </div>
 
-        {/* Card */}
         <div className="card auth-card-stagger" style={{ padding: 'clamp(24px, 5vw, 32px)' }}>
           <form onSubmit={handleLogin}>
-            {/* Email Field */}
             <div className="form-group">
               <label style={{
                 display: 'block',
                 marginBottom: '8px',
                 fontWeight: '600',
                 color: 'var(--text-primary)',
-                fontSize: '0.95rem'
-              }}>📧 Email</label>
+                fontSize: '0.95rem',
+              }}
+              >📧 {t('auth.emailOrPhoneLabel')}</label>
               <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                type="text"
+                inputMode="text"
+                value={loginId}
+                onChange={(e) => setLoginId(e.target.value)}
+                placeholder={t('auth.emailOrPhonePlaceholder')}
+                autoComplete="username"
                 required
                 className="form-input"
                 disabled={loading}
                 style={{
-                  width: '100%'
+                  width: '100%',
                 }}
               />
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: 8 }}>
+                {t('auth.emailOrPhoneHint')}
+              </p>
             </div>
 
-            {/* Password Field */}
             <div className="form-group">
               <label style={{
                 display: 'block',
                 marginBottom: '8px',
                 fontWeight: '600',
                 color: 'var(--text-primary)',
-                fontSize: '0.95rem'
-              }}>🔒 Password</label>
+                fontSize: '0.95rem',
+              }}
+              >🔒 {t('auth.passwordLabel')}</label>
               <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Enter your password"
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t('auth.passwordPlaceholder')}
                   required
                   className="form-input"
                   disabled={loading}
@@ -130,7 +149,7 @@ export default function LoginPage({ onLogin }) {
                     border: 'none',
                     cursor: 'pointer',
                     fontSize: '1.2rem',
-                    padding: '0'
+                    padding: '0',
                   }}
                 >
                   {showPassword ? '👁️' : '👁️‍🗨️'}
@@ -138,7 +157,6 @@ export default function LoginPage({ onLogin }) {
               </div>
             </div>
 
-            {/* Error Message */}
             {error && (
               <div style={{
                 background: 'rgba(231, 76, 60, 0.1)',
@@ -148,60 +166,70 @@ export default function LoginPage({ onLogin }) {
                 borderRadius: 'var(--radius-md)',
                 marginBottom: '16px',
                 fontSize: '0.9rem',
-                animation: 'slideDown 0.3s ease-out'
-              }}>
+                animation: 'slideDown 0.3s ease-out',
+              }}
+              >
                 ⚠️ {error}
               </div>
             )}
 
-            {/* Submit Button */}
             <button
               type="submit"
               className="btn btn-primary"
               style={{
                 width: '100%',
                 padding: '14px',
-                marginBottom: '16px',
+                marginBottom: '12px',
                 fontSize: '1rem',
-                fontWeight: '700'
+                fontWeight: '700',
               }}
               disabled={loading}
             >
-              {loading ? '⏳ Signing in...' : '✓ Sign In'}
+              {loading ? t('auth.signingIn') : t('auth.signIn')}
             </button>
           </form>
 
-          {/* Divider */}
+          <p style={{ textAlign: 'center', marginBottom: '12px', fontSize: '0.9rem' }}>
+            <Link
+              to="/language?next=/login"
+              style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}
+            >
+              {t('lang.changeLink')}
+            </Link>
+          </p>
+
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
             margin: '24px 0',
-            color: 'var(--text-light)'
-          }}>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
-            <span style={{ fontSize: '0.85rem' }}>OR</span>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+            color: 'var(--text-light)',
+          }}
+          >
+            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
+            <span style={{ fontSize: '0.85rem' }}>{t('common.or')}</span>
+            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
           </div>
 
-          {/* Sign Up Link */}
           <p style={{
             textAlign: 'center',
             color: 'var(--text-secondary)',
             marginBottom: '0',
-            fontSize: '0.95rem'
-          }}>
-            Don't have an account?{' '}
+            fontSize: '0.95rem',
+          }}
+          >
+            {t('auth.noAccount')}
+            {' '}
             <Link
               to="/register"
               style={{
                 color: 'var(--primary)',
                 textDecoration: 'none',
                 fontWeight: '700',
-                transition: 'color var(--transition-fast)'
+                transition: 'color var(--transition-fast)',
               }}
             >
-              Create one now!
+              {t('auth.createAccount')}
             </Link>
           </p>
         </div>

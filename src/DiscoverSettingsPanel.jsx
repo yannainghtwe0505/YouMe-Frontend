@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   DISCOVER_MODES,
   INTERESTED_IN_OPTIONS,
@@ -6,9 +7,23 @@ import {
   SELECT_OPTIONS,
   emptyDiscoverySettings,
   emptyLifestyle,
+  labelForSelectOption,
 } from './discoveryDefaults';
 
-function FilterSelect({ label, options, value, onChange, id }) {
+const LANG_NAME_KEYS = {
+  English: 'english',
+  Japanese: 'japanese',
+  Spanish: 'spanish',
+  French: 'french',
+  Korean: 'korean',
+  Mandarin: 'mandarin',
+  Hindi: 'hindi',
+  Portuguese: 'portuguese',
+  German: 'german',
+  Arabic: 'arabic',
+};
+
+function FilterSelect({ label, field, options, value, onChange, id, t }) {
   const safe = Array.isArray(options) ? options : [''];
   const list = safe[0] === '' ? safe : ['', ...safe.filter(Boolean)];
   return (
@@ -21,21 +36,25 @@ function FilterSelect({ label, options, value, onChange, id }) {
         onChange={(e) => onChange(e.target.value)}
       >
         {list.map((o) => (
-          <option key={o || '_any'} value={o}>{o || 'Any'}</option>
+          <option key={o || '_any'} value={o}>
+            {labelForSelectOption(field, o, t)}
+          </option>
         ))}
       </select>
     </label>
   );
 }
 
-function LifestyleField({ label, field, lifestyle, setLifestyle, id }) {
+function LifestyleField({ label, field, lifestyle, setLifestyle, id, t }) {
   const list = SELECT_OPTIONS[field] || [''];
   return (
     <FilterSelect
       label={label}
+      field={field}
       options={list}
       value={lifestyle[field]}
       id={id}
+      t={t}
       onChange={(v) => setLifestyle((prev) => ({ ...prev, [field]: v }))}
     />
   );
@@ -44,6 +63,7 @@ function LifestyleField({ label, field, lifestyle, setLifestyle, id }) {
 export default function DiscoverSettingsPanel({
   open,
   onClose,
+  hydrating = false,
   discoverySettings,
   setDiscoverySettings,
   lifestyle,
@@ -64,6 +84,7 @@ export default function DiscoverSettingsPanel({
   saving,
   saveError,
 }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState('show');
 
   useEffect(() => {
@@ -85,6 +106,40 @@ export default function DiscoverSettingsPanel({
   }, [open]);
 
   if (!open) return null;
+
+  if (hydrating) {
+    return (
+      <div
+        className="discover-settings-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-busy="true"
+        aria-labelledby="discover-settings-title"
+        onClick={onClose}
+      >
+        <div
+          className="discover-settings-sheet card-surface discover-settings-sheet-wide"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="discover-settings-head">
+            <h2 id="discover-settings-title">{t('discover.settings.title')}</h2>
+            <button
+              type="button"
+              className="discover-settings-done"
+              onClick={onClose}
+              disabled={saving}
+              aria-label={t('discover.settings.saveAndCloseAria')}
+            >
+              ✓
+            </button>
+          </div>
+          <p className="discover-settings-lead" style={{ marginTop: 24, textAlign: 'center' }}>
+            {t('common.loading')}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const disc = discoverySettings || emptyDiscoverySettings();
   const filters = disc.filters || emptyDiscoverySettings().filters;
@@ -113,17 +168,21 @@ export default function DiscoverSettingsPanel({
 
   const toggleLang = (lang, which) => {
     if (which === 'filter') {
-      setFilter('languages', (() => {
-        const cur = [...(filters.languages || [])];
+      setDiscoverySettings((prev) => {
+        const p = prev || emptyDiscoverySettings();
+        const baseF = emptyDiscoverySettings().filters;
+        const merged = { ...baseF, ...(p.filters || {}) };
+        const cur = [...(Array.isArray(merged.languages) ? merged.languages : [])];
         const i = cur.indexOf(lang);
         if (i >= 0) cur.splice(i, 1);
         else cur.push(lang);
-        return cur;
-      })());
+        merged.languages = cur;
+        return { ...p, filters: merged };
+      });
     } else {
       setLifestyle((prev) => {
         const p = prev || emptyLifestyle();
-        const cur = [...(p.languages || [])];
+        const cur = [...(Array.isArray(p.languages) ? p.languages : [])];
         const i = cur.indexOf(lang);
         if (i >= 0) cur.splice(i, 1);
         else cur.push(lang);
@@ -157,13 +216,13 @@ export default function DiscoverSettingsPanel({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="discover-settings-head">
-          <h2 id="discover-settings-title">Discovery settings</h2>
+          <h2 id="discover-settings-title">{t('discover.settings.title')}</h2>
           <button
             type="button"
             className="discover-settings-done"
             onClick={onSave}
             disabled={saving}
-            aria-label="Save and close"
+            aria-label={t('discover.settings.saveAndCloseAria')}
           >
             ✓
           </button>
@@ -177,7 +236,7 @@ export default function DiscoverSettingsPanel({
             className={`discover-settings-tab${tab === 'show' ? ' active' : ''}`}
             onClick={() => setTab('show')}
           >
-            Show me
+            {t('discover.settings.tabShowMe')}
           </button>
           <button
             type="button"
@@ -186,20 +245,19 @@ export default function DiscoverSettingsPanel({
             className={`discover-settings-tab${tab === 'my' ? ' active' : ''}`}
             onClick={() => setTab('my')}
           >
-            My profile
+            {t('discover.settings.tabMyProfile')}
           </button>
         </div>
 
         {tab === 'show' ? (
           <>
             <p className="discover-settings-lead">
-              Control which people appear in Discover. Stricter filters mean fewer profiles — you can loosen
-              distance or age when you run out (below).
+              {t('discover.settings.leadShow')}
             </p>
 
             <div className="discover-settings-section">
-              <h3 className="discover-settings-sub">Modes</h3>
-              <div className="discover-mode-pills" role="group" aria-label="Discover mode">
+              <h3 className="discover-settings-sub">{t('discover.settings.modes')}</h3>
+              <div className="discover-mode-pills" role="group" aria-label={t('discover.settings.modesAria')}>
                 {DISCOVER_MODES.map((m) => (
                   <button
                     key={m.id}
@@ -207,15 +265,15 @@ export default function DiscoverSettingsPanel({
                     className={`discover-mode-pill${disc.mode === m.id ? ' active' : ''}`}
                     onClick={() => setDiscoverySettings((prev) => ({ ...(prev || emptyDiscoverySettings()), mode: m.id }))}
                   >
-                    {m.label}
+                    {t(`discover.mode.${m.id}`)}
                   </button>
                 ))}
               </div>
-              <p className="discover-settings-hint">Others choose modes they want to appear in on the My profile tab.</p>
+              <p className="discover-settings-hint">{t('discover.settings.modesHint')}</p>
             </div>
 
             <div className="discover-settings-section discover-settings-section-divider">
-              <h3 className="discover-settings-sub">Interested in</h3>
+              <h3 className="discover-settings-sub">{t('discover.settings.interestedIn')}</h3>
               <div className="discover-chip-row">
                 {INTERESTED_IN_OPTIONS.map((opt) => (
                   <button
@@ -224,21 +282,21 @@ export default function DiscoverSettingsPanel({
                     className={`discover-pref-chip${(disc.interestedIn || []).includes(opt.id) ? ' active' : ''}`}
                     onClick={() => toggleInterested(opt.id)}
                   >
-                    {opt.label}
+                    {t(`discover.interestedIn.${opt.id}`)}
                   </button>
                 ))}
               </div>
-              <p className="discover-settings-hint">Leave all off to include every gender.</p>
+              <p className="discover-settings-hint">{t('discover.settings.interestedInHint')}</p>
             </div>
 
             <div className="discover-settings-section discover-settings-section-divider">
-              <h3 className="discover-settings-sub">Age range</h3>
+              <h3 className="discover-settings-sub">{t('discover.settings.ageRange')}</h3>
               <div className="discover-age-readout">
                 <span>{minAge}</span>
                 <span className="discover-age-sep">–</span>
                 <span>{maxAge}</span>
               </div>
-              <label className="discover-settings-sr" htmlFor="disc-min-age">Minimum age</label>
+              <label className="discover-settings-sr" htmlFor="disc-min-age">{t('discover.settings.minAge')}</label>
               <input
                 id="disc-min-age"
                 type="range"
@@ -251,7 +309,7 @@ export default function DiscoverSettingsPanel({
                   setMinAge(Math.min(v, maxAge));
                 }}
               />
-              <label className="discover-settings-sr" htmlFor="disc-max-age">Maximum age</label>
+              <label className="discover-settings-sr" htmlFor="disc-max-age">{t('discover.settings.maxAge')}</label>
               <input
                 id="disc-max-age"
                 type="range"
@@ -273,13 +331,13 @@ export default function DiscoverSettingsPanel({
                   checked={limitEnabled}
                   onChange={(e) => setLimitEnabled(e.target.checked)}
                 />
-                <span>Limit maximum distance</span>
+                <span>{t('discover.settings.limitDistance')}</span>
               </label>
               {limitEnabled ? (
                 <div className="discover-settings-slider-block">
                   <div className="discover-settings-km-readout">
-                    <span className="discover-settings-km-label">Maximum distance</span>
-                    <span className="discover-settings-km-value">{maxKm} km</span>
+                    <span className="discover-settings-km-label">{t('discover.settings.maxDistance')}</span>
+                    <span className="discover-settings-km-value">{t('discover.settings.kmValue', { km: maxKm })}</span>
                   </div>
                   <input
                     type="range"
@@ -303,7 +361,7 @@ export default function DiscoverSettingsPanel({
                     requireBio: e.target.checked,
                   }))}
                 />
-                <span>Has a bio</span>
+                <span>{t('discover.settings.requireBio')}</span>
               </label>
               <label className="discover-settings-toggle">
                 <input
@@ -314,7 +372,7 @@ export default function DiscoverSettingsPanel({
                     expandDistanceWhenEmpty: e.target.checked,
                   }))}
                 />
-                <span>Show people further away if I run out of nearby profiles</span>
+                <span>{t('discover.settings.expandDistance')}</span>
               </label>
               <label className="discover-settings-toggle">
                 <input
@@ -325,14 +383,14 @@ export default function DiscoverSettingsPanel({
                     expandAgeWhenEmpty: e.target.checked,
                   }))}
                 />
-                <span>Show people slightly outside my age range if I run out</span>
+                <span>{t('discover.settings.expandAge')}</span>
               </label>
             </div>
 
             <div className="discover-settings-section discover-settings-section-divider">
-              <h3 className="discover-settings-sub">Minimum photos in profile</h3>
+              <h3 className="discover-settings-sub">{t('discover.settings.minPhotosTitle')}</h3>
               <div className="discover-settings-km-readout">
-                <span className="discover-settings-km-label">At least this many photos</span>
+                <span className="discover-settings-km-label">{t('discover.settings.minPhotosLabel')}</span>
                 <span className="discover-settings-km-value">{disc.minPhotos ?? 1}</span>
               </div>
               <input
@@ -352,108 +410,133 @@ export default function DiscoverSettingsPanel({
             </div>
 
             <div className="discover-settings-section discover-settings-section-divider">
-              <h3 className="discover-settings-sub">Narrow by their profile</h3>
-              <p className="discover-settings-hint">Only people who match these (they fill details on My profile). Leave &quot;Any&quot; to skip.</p>
+              <h3 className="discover-settings-sub">{t('discover.settings.narrowTitle')}</h3>
+              <p className="discover-settings-hint">{t('discover.settings.narrowHint')}</p>
               <div className="discover-filter-grid">
                 <FilterSelect
-                  label="Looking for"
+                  label={t('discover.settings.filter.lookingFor')}
+                  field="lookingFor"
                   options={SELECT_OPTIONS.lookingFor}
                   value={filters.lookingFor}
                   id="f-looking"
+                  t={t}
                   onChange={(v) => setFilter('lookingFor', v)}
                 />
                 <FilterSelect
-                  label="Zodiac"
+                  label={t('discover.settings.filter.zodiac')}
+                  field="zodiac"
                   options={SELECT_OPTIONS.zodiac}
                   value={filters.zodiac}
                   id="f-zodiac"
+                  t={t}
                   onChange={(v) => setFilter('zodiac', v)}
                 />
                 <FilterSelect
-                  label="Education"
+                  label={t('discover.settings.filter.education')}
+                  field="education"
                   options={SELECT_OPTIONS.education}
                   value={filters.education}
                   id="f-edu"
+                  t={t}
                   onChange={(v) => setFilter('education', v)}
                 />
                 <FilterSelect
-                  label="Family plans"
+                  label={t('discover.settings.filter.familyPlans')}
+                  field="familyPlans"
                   options={SELECT_OPTIONS.familyPlans}
                   value={filters.familyPlans}
                   id="f-family"
+                  t={t}
                   onChange={(v) => setFilter('familyPlans', v)}
                 />
                 <FilterSelect
-                  label="Communication style"
+                  label={t('discover.settings.filter.communicationStyle')}
+                  field="communicationStyle"
                   options={SELECT_OPTIONS.communicationStyle}
                   value={filters.communicationStyle}
                   id="f-comm"
+                  t={t}
                   onChange={(v) => setFilter('communicationStyle', v)}
                 />
                 <FilterSelect
-                  label="Love style"
+                  label={t('discover.settings.filter.loveStyle')}
+                  field="loveStyle"
                   options={SELECT_OPTIONS.loveStyle}
                   value={filters.loveStyle}
                   id="f-love"
+                  t={t}
                   onChange={(v) => setFilter('loveStyle', v)}
                 />
                 <FilterSelect
-                  label="Pets"
+                  label={t('discover.settings.filter.pets')}
+                  field="pets"
                   options={SELECT_OPTIONS.pets}
                   value={filters.pets}
                   id="f-pets"
+                  t={t}
                   onChange={(v) => setFilter('pets', v)}
                 />
                 <FilterSelect
-                  label="Drinking"
+                  label={t('discover.settings.filter.drinking')}
+                  field="drinking"
                   options={SELECT_OPTIONS.drinking}
                   value={filters.drinking}
                   id="f-drink"
+                  t={t}
                   onChange={(v) => setFilter('drinking', v)}
                 />
                 <FilterSelect
-                  label="Smoking"
+                  label={t('discover.settings.filter.smoking')}
+                  field="smoking"
                   options={SELECT_OPTIONS.smoking}
                   value={filters.smoking}
                   id="f-smoke"
+                  t={t}
                   onChange={(v) => setFilter('smoking', v)}
                 />
                 <FilterSelect
-                  label="Workout"
+                  label={t('discover.settings.filter.workout')}
+                  field="workout"
                   options={SELECT_OPTIONS.workout}
                   value={filters.workout}
                   id="f-workout"
+                  t={t}
                   onChange={(v) => setFilter('workout', v)}
                 />
                 <FilterSelect
-                  label="Social media"
+                  label={t('discover.settings.filter.socialMedia')}
+                  field="socialMedia"
                   options={SELECT_OPTIONS.socialMedia}
                   value={filters.socialMedia}
                   id="f-social"
+                  t={t}
                   onChange={(v) => setFilter('socialMedia', v)}
                 />
               </div>
               <div className="discover-lang-block">
-                <div className="discover-filter-label">Languages they speak (any match)</div>
+                <div className="discover-filter-label">{t('discover.settings.langTheySpeak')}</div>
                 <div className="discover-lang-grid">
                   {LANGUAGE_OPTIONS.map((lang) => (
-                    <label key={lang} className="discover-lang-item">
+                    <label key={lang} className="discover-lang-item" htmlFor={`disc-lang-filter-${lang}`}>
                       <input
+                        id={`disc-lang-filter-${lang}`}
                         type="checkbox"
-                        checked={(filters.languages || []).includes(lang)}
+                        checked={(Array.isArray(filters.languages) ? filters.languages : []).includes(lang)}
                         onChange={() => toggleLang(lang, 'filter')}
                       />
-                      {lang}
+                      <span className="discover-lang-label-text">
+                        {t(`discover.langName.${LANG_NAME_KEYS[lang] || lang}`)}
+                      </span>
                     </label>
                   ))}
                 </div>
               </div>
               <label className="discover-filter-field" htmlFor="f-interest">
-                <span className="discover-filter-label">Must share interest tag</span>
+                <span className="discover-filter-label">{t('discover.settings.mustShareInterest')}</span>
                 <input
                   id="f-interest"
                   className="form-input"
-                  placeholder="e.g. Hiking"
+                  placeholder={t('discover.settings.mustShareInterestPlaceholder')}
                   value={filters.mustShareInterest || ''}
                   onChange={(e) => setFilter('mustShareInterest', e.target.value)}
                 />
@@ -461,11 +544,11 @@ export default function DiscoverSettingsPanel({
             </div>
 
             <div className="discover-settings-section discover-settings-section-divider">
-              <h3 className="discover-settings-sub">Your position</h3>
+              <h3 className="discover-settings-sub">{t('discover.settings.yourPosition')}</h3>
               {hasCoords ? (
-                <p className="discover-settings-hint discover-settings-hint-ok">Saved — needed for distance sorting and filters.</p>
+                <p className="discover-settings-hint discover-settings-hint-ok">{t('discover.settings.positionOk')}</p>
               ) : (
-                <p className="discover-settings-hint warn">Add your position to use distance limits accurately.</p>
+                <p className="discover-settings-hint warn">{t('discover.settings.positionWarn')}</p>
               )}
               <button
                 type="button"
@@ -473,7 +556,7 @@ export default function DiscoverSettingsPanel({
                 onClick={onUseLocation}
                 disabled={locLoading}
               >
-                {locLoading ? 'Finding you…' : 'Use my current location'}
+                {locLoading ? t('discover.settings.findingYou') : t('discover.settings.useLocation')}
               </button>
               {geoHint ? <p className="discover-settings-hint err">{geoHint}</p> : null}
             </div>
@@ -481,10 +564,10 @@ export default function DiscoverSettingsPanel({
         ) : (
           <>
             <p className="discover-settings-lead">
-              These details let other people filter fairly — add what you&apos;re comfortable sharing.
+              {t('discover.settings.leadMy')}
             </p>
             <div className="discover-settings-section">
-              <h3 className="discover-settings-sub">Appear in these modes</h3>
+              <h3 className="discover-settings-sub">{t('discover.settings.appearInModes')}</h3>
               <div className="discover-chip-row">
                 {DISCOVER_MODES.map((m) => (
                   <button
@@ -493,37 +576,40 @@ export default function DiscoverSettingsPanel({
                     className={`discover-pref-chip${(life.appearsInModes || []).includes(m.id) ? ' active' : ''}`}
                     onClick={() => toggleAppearMode(m.id)}
                   >
-                    {m.label}
+                    {t(`discover.mode.${m.id}`)}
                   </button>
                 ))}
               </div>
             </div>
             <div className="discover-settings-section discover-settings-section-divider">
-              <h3 className="discover-settings-sub">About you</h3>
+              <h3 className="discover-settings-sub">{t('discover.settings.aboutYou')}</h3>
               <div className="discover-filter-grid">
-                <LifestyleField label="Looking for" field="lookingFor" lifestyle={life} setLifestyle={setLifestyle} id="l-looking" />
-                <LifestyleField label="Zodiac" field="zodiac" lifestyle={life} setLifestyle={setLifestyle} id="l-zodiac" />
-                <LifestyleField label="Education" field="education" lifestyle={life} setLifestyle={setLifestyle} id="l-edu" />
-                <LifestyleField label="Family plans" field="familyPlans" lifestyle={life} setLifestyle={setLifestyle} id="l-family" />
-                <LifestyleField label="Communication style" field="communicationStyle" lifestyle={life} setLifestyle={setLifestyle} id="l-comm" />
-                <LifestyleField label="Love style" field="loveStyle" lifestyle={life} setLifestyle={setLifestyle} id="l-love" />
-                <LifestyleField label="Pets" field="pets" lifestyle={life} setLifestyle={setLifestyle} id="l-pets" />
-                <LifestyleField label="Drinking" field="drinking" lifestyle={life} setLifestyle={setLifestyle} id="l-drink" />
-                <LifestyleField label="Smoking" field="smoking" lifestyle={life} setLifestyle={setLifestyle} id="l-smoke" />
-                <LifestyleField label="Workout" field="workout" lifestyle={life} setLifestyle={setLifestyle} id="l-workout" />
-                <LifestyleField label="Social media" field="socialMedia" lifestyle={life} setLifestyle={setLifestyle} id="l-social" />
+                <LifestyleField label={t('discover.settings.filter.lookingFor')} field="lookingFor" lifestyle={life} setLifestyle={setLifestyle} id="l-looking" t={t} />
+                <LifestyleField label={t('discover.settings.filter.zodiac')} field="zodiac" lifestyle={life} setLifestyle={setLifestyle} id="l-zodiac" t={t} />
+                <LifestyleField label={t('discover.settings.filter.education')} field="education" lifestyle={life} setLifestyle={setLifestyle} id="l-edu" t={t} />
+                <LifestyleField label={t('discover.settings.filter.familyPlans')} field="familyPlans" lifestyle={life} setLifestyle={setLifestyle} id="l-family" t={t} />
+                <LifestyleField label={t('discover.settings.filter.communicationStyle')} field="communicationStyle" lifestyle={life} setLifestyle={setLifestyle} id="l-comm" t={t} />
+                <LifestyleField label={t('discover.settings.filter.loveStyle')} field="loveStyle" lifestyle={life} setLifestyle={setLifestyle} id="l-love" t={t} />
+                <LifestyleField label={t('discover.settings.filter.pets')} field="pets" lifestyle={life} setLifestyle={setLifestyle} id="l-pets" t={t} />
+                <LifestyleField label={t('discover.settings.filter.drinking')} field="drinking" lifestyle={life} setLifestyle={setLifestyle} id="l-drink" t={t} />
+                <LifestyleField label={t('discover.settings.filter.smoking')} field="smoking" lifestyle={life} setLifestyle={setLifestyle} id="l-smoke" t={t} />
+                <LifestyleField label={t('discover.settings.filter.workout')} field="workout" lifestyle={life} setLifestyle={setLifestyle} id="l-workout" t={t} />
+                <LifestyleField label={t('discover.settings.filter.socialMedia')} field="socialMedia" lifestyle={life} setLifestyle={setLifestyle} id="l-social" t={t} />
               </div>
               <div className="discover-lang-block">
-                <div className="discover-filter-label">Languages you speak</div>
+                <div className="discover-filter-label">{t('discover.settings.langYouSpeak')}</div>
                 <div className="discover-lang-grid">
                   {LANGUAGE_OPTIONS.map((lang) => (
-                    <label key={lang} className="discover-lang-item">
+                    <label key={lang} className="discover-lang-item" htmlFor={`disc-lang-life-${lang}`}>
                       <input
+                        id={`disc-lang-life-${lang}`}
                         type="checkbox"
-                        checked={(life.languages || []).includes(lang)}
+                        checked={(Array.isArray(life.languages) ? life.languages : []).includes(lang)}
                         onChange={() => toggleLang(lang, 'life')}
                       />
-                      {lang}
+                      <span className="discover-lang-label-text">
+                        {t(`discover.langName.${LANG_NAME_KEYS[lang] || lang}`)}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -536,10 +622,10 @@ export default function DiscoverSettingsPanel({
 
         <div className="discover-settings-actions">
           <button type="button" className="btn btn-ghost" onClick={onClose} disabled={saving}>
-            Cancel
+            {t('discover.settings.cancel')}
           </button>
           <button type="button" className="btn btn-primary" onClick={onSave} disabled={saving}>
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? t('common.saving') : t('discover.settings.save')}
           </button>
         </div>
       </div>

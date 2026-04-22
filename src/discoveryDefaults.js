@@ -117,6 +117,50 @@ export const SELECT_OPTIONS = {
   ],
 };
 
+/** Parallel to SELECT_OPTIONS[field] — i18n key suffixes under discover.options.{field}.{key} */
+export const SELECT_OPTION_KEYS = {
+  lookingFor: ['any', 'longTerm', 'shortTerm', 'newFriends', 'figuring'],
+  zodiac: [
+    'any',
+    'aries',
+    'taurus',
+    'gemini',
+    'cancer',
+    'leo',
+    'virgo',
+    'libra',
+    'scorpio',
+    'sagittarius',
+    'capricorn',
+    'aquarius',
+    'pisces',
+  ],
+  education: ['any', 'highSchool', 'tradeSchool', 'inCollege', 'undergrad', 'graduate'],
+  familyPlans: ['any', 'wantChildren', 'noChildren', 'openChildren', 'notSure'],
+  communicationStyle: ['any', 'bigTexter', 'badTexter', 'phoneCaller', 'videoChatter', 'meetOften'],
+  loveStyle: ['any', 'timeTogether', 'touch', 'compliments', 'gifts', 'actsOfService'],
+  pets: ['any', 'dog', 'cat', 'otherPets', 'wantPet', 'allergic', 'noPets'],
+  drinking: ['any', 'never', 'sober', 'socially', 'specialOccasions', 'mostWeekends'],
+  smoking: ['any', 'nonSmoker', 'occasional', 'smoker', 'tryingToQuit'],
+  workout: ['any', 'everyDay', 'often', 'sometimes', 'rarely'],
+  socialMedia: ['any', 'passiveScroller', 'influencer', 'offTheGrid'],
+};
+
+/**
+ * Localized label for a stored select value (English string from API).
+ * Unknown values are returned as-is so user-typed or future options still display.
+ */
+export function labelForSelectOption(field, value, t) {
+  const options = SELECT_OPTIONS[field];
+  const keys = SELECT_OPTION_KEYS[field];
+  if (!options || !keys) return value || '';
+  const idx = options.indexOf(value);
+  if (idx < 0) return value || '';
+  if (!value) return t('common.any');
+  const suffix = keys[idx];
+  return t(`discover.options.${field}.${suffix}`);
+}
+
 export function emptyFilters() {
   return {
     lookingFor: '',
@@ -169,8 +213,8 @@ function deepMergeFilters(base, patch) {
   if (!patch || typeof patch !== 'object') return { ...base };
   const out = { ...base };
   for (const k of Object.keys(patch)) {
-    if (k === 'languages' && Array.isArray(patch.languages)) {
-      out.languages = [...patch.languages];
+    if (k === 'languages') {
+      out.languages = Array.isArray(patch.languages) ? [...patch.languages] : [];
     } else {
       out[k] = patch[k];
     }

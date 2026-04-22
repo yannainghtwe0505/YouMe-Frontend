@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api';
+import { labelTokyoWard } from '../tokyoWardI18n';
 
 const MAX_PHOTOS = 6;
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -18,16 +20,20 @@ const HOBBY_PRESETS = [
   'Gaming',
 ];
 
-const REFERRAL_OPTIONS = [
-  { value: 'TIKTOK', label: 'TikTok' },
-  { value: 'INSTAGRAM', label: 'Instagram' },
-  { value: 'FRIEND', label: 'Friend' },
-  { value: 'YOUTUBE', label: 'YouTube' },
-  { value: 'GOOGLE', label: 'Google Search' },
-  { value: 'STORE', label: 'App Store / Play Store' },
-  { value: 'AD', label: 'Advertisement' },
-  { value: 'OTHER', label: 'Other' },
-];
+const REFERRAL_VALUES = ['TIKTOK', 'INSTAGRAM', 'FRIEND', 'YOUTUBE', 'GOOGLE', 'STORE', 'AD', 'OTHER'];
+
+const HOBBY_PRESET_I18N = {
+  Travel: 'travel',
+  Gym: 'gym',
+  Anime: 'anime',
+  Movies: 'movies',
+  Reading: 'reading',
+  Music: 'music',
+  Café: 'cafe',
+  Hiking: 'hiking',
+  Cooking: 'cooking',
+  Gaming: 'gaming',
+};
 
 const SERVER_TO_UI = {
   GENDER: 'gender',
@@ -41,15 +47,16 @@ const SERVER_TO_UI = {
   PHOTOS: 'photos',
 };
 
-function parseError(err) {
+function parseError(err, t) {
   const d = err.response?.data;
-  if (d == null) return err.message || 'Something went wrong.';
+  const fallback = t('errors.generic');
+  if (d == null) return err.message || fallback;
   if (typeof d === 'string') return d;
   if (typeof d.error === 'string') return d.error;
-  return err.message || 'Something went wrong.';
+  return err.message || fallback;
 }
 
-function ProgressBar({ phase, total }) {
+function ProgressBar({ phase, total, t }) {
   const pct = Math.round((phase / total) * 100);
   return (
     <div style={{ marginBottom: '20px' }}>
@@ -71,7 +78,7 @@ function ProgressBar({ phase, total }) {
         />
       </div>
       <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '8px 0 0 0' }}>
-        Step {phase} of {total}
+        {t('register.stepProgress', { phase, total })}
       </p>
     </div>
   );
@@ -138,11 +145,13 @@ function primaryButtonStyle(disabled) {
 }
 
 export default function RegisterPage({ onRegister }) {
+  const { t: tr } = useTranslation();
   const navigate = useNavigate();
   const [booting, setBooting] = useState(() => Boolean(localStorage.getItem('token')));
   const [step, setStep] = useState('method');
   const [method, setMethod] = useState(null);
   const [contact, setContact] = useState('');
+  const [optionalEmail, setOptionalEmail] = useState('');
   const [code, setCode] = useState('');
   const [pendingSessionToken, setPendingSessionToken] = useState('');
   const [password, setPassword] = useState('');
@@ -223,6 +232,18 @@ export default function RegisterPage({ onRegister }) {
       if (life.living) setLiving(String(life.living));
       if (life.referralSource) setReferralSource(String(life.referralSource));
       if (Array.isArray(data.interests)) setInterests(data.interests);
+      const ch = data.verificationChannel;
+      if (ch === 'PHONE') {
+        setMethod('phone');
+        const pe = data.phoneE164;
+        if (pe && typeof pe === 'string') {
+          setContact(pe.startsWith('+81') ? `0${pe.slice(3)}` : pe);
+        }
+        if (data.accountEmail) setOptionalEmail(String(data.accountEmail));
+      } else if (ch === 'EMAIL') {
+        setMethod('email');
+        if (data.accountEmail) setContact(String(data.accountEmail));
+      }
       const s = data.onboardingStep || 'GENDER';
       setStep(SERVER_TO_UI[s] || 'gender');
     } catch (err) {
@@ -254,14 +275,21 @@ export default function RegisterPage({ onRegister }) {
   const filteredWards = useMemo(() => {
     const q = wardQuery.trim().toLowerCase();
     if (!q) return tokyoList;
-    return tokyoList.filter((w) => w.toLowerCase().includes(q));
-  }, [tokyoList, wardQuery]);
+    return tokyoList.filter((w) => {
+      if (w.toLowerCase().includes(q)) return true;
+      return labelTokyoWard(w, tr).toLowerCase().includes(q);
+    });
+  }, [tokyoList, wardQuery, tr]);
 
   const filteredHobbies = useMemo(() => {
     const q = interestSearch.trim().toLowerCase();
-    const base = HOBBY_PRESETS.filter((h) => !q || h.toLowerCase().includes(q));
-    return base;
-  }, [interestSearch]);
+    if (!q) return HOBBY_PRESETS;
+    return HOBBY_PRESETS.filter((h) => {
+      if (h.toLowerCase().includes(q)) return true;
+      const ik = HOBBY_PRESET_I18N[h];
+      return ik && tr(`register.hobbyPreset.${ik}`).toLowerCase().includes(q);
+    });
+  }, [interestSearch, tr]);
 
   const patchProfile = async (body) => {
     await api.put('/auth/registration/profile', body);
@@ -276,11 +304,11 @@ export default function RegisterPage({ onRegister }) {
       for (const file of incoming) {
         if (next.length >= MAX_PHOTOS) break;
         if (!file.type || !file.type.startsWith('image/')) {
-          setError('Please choose image files only (JPEG, PNG, WebP, etc.).');
+          setError(tr('register.error.imagesOnly'));
           return prev;
         }
         if (file.size > MAX_BYTES) {
-          setError('Each photo must be 5 MB or smaller.');
+          setError(tr('register.error.photoTooLarge'));
           return prev;
         }
         next.push({
@@ -312,18 +340,26 @@ export default function RegisterPage({ onRegister }) {
     setError(null);
     setSendSuccess(null);
     if (!method) {
-      setError('Go back and choose Email or Phone.');
+      setError(tr('register.error.chooseVerifyMethod'));
       return;
     }
     const c = contact.trim();
     if (!c) {
-      setError(method === 'email' ? 'Enter your email address.' : 'Enter your phone number.');
+      setError(method === 'email' ? tr('register.error.enterEmail') : tr('register.error.enterPhone'));
       return;
     }
     if (method === 'email') {
       const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c);
       if (!ok) {
-        setError('Enter a valid email address.');
+        setError(tr('register.error.invalidEmail'));
+        return;
+      }
+    }
+    const oe = optionalEmail.trim();
+    if (method === 'phone' && oe) {
+      const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(oe);
+      if (!ok) {
+        setError(tr('register.error.optionalEmailInvalid'));
         return;
       }
     }
@@ -332,20 +368,18 @@ export default function RegisterPage({ onRegister }) {
       if (method === 'email') {
         await api.post('/auth/registration/email/send', { email: c });
       } else {
-        await api.post('/auth/registration/phone/send', { phone: c });
+        const body = { phone: c };
+        if (oe) body.email = oe;
+        await api.post('/auth/registration/phone/send', body);
       }
-      const hint =
-        method === 'email'
-          ? 'Check your inbox (and spam). If SMTP is not set up yet, the code is printed in the server log.'
-          : 'SMS is simulated until you add a provider — the code is printed in the server log.';
-      setSendSuccess(hint);
+      setSendSuccess(method === 'email' ? 'email' : 'phone');
       if (import.meta.env.DEV) {
         // eslint-disable-next-line no-console
         console.info('[YouMe] Send code OK:', method, c);
       }
       setStep('verify');
     } catch (err) {
-      setError(parseError(err));
+      setError(parseError(err, tr));
       if (import.meta.env.DEV) {
         // eslint-disable-next-line no-console
         console.warn('[YouMe] Send code failed:', err.response?.status, err.response?.data || err.message);
@@ -359,11 +393,11 @@ export default function RegisterPage({ onRegister }) {
     setError(null);
     const digits = code.trim();
     if (digits.length !== 6) {
-      setError('Enter the 6-digit code.');
+      setError(tr('register.error.enterSixDigit'));
       return;
     }
     if (!method) {
-      setError('Go back and choose Email or Phone.');
+      setError(tr('register.methodError'));
       return;
     }
     setLoading(true);
@@ -377,7 +411,7 @@ export default function RegisterPage({ onRegister }) {
       setPendingSessionToken(res.data.pendingSessionToken);
       setStep('password');
     } catch (err) {
-      setError(parseError(err));
+      setError(parseError(err, tr));
     } finally {
       setLoading(false);
     }
@@ -387,11 +421,11 @@ export default function RegisterPage({ onRegister }) {
     e.preventDefault();
     setError(null);
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(tr('register.error.passwordMismatch'));
       return;
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError(tr('register.error.passwordTooShort'));
       return;
     }
     setLoading(true);
@@ -405,14 +439,14 @@ export default function RegisterPage({ onRegister }) {
         onRegister({
           token: res.data.token,
           userId: res.data.userId ?? null,
-          email: method === 'email' ? contact.trim() : null,
+          email: method === 'email' ? contact.trim() : optionalEmail.trim() || null,
           displayName: '',
           registrationComplete: false,
         });
       }
       setStep('gender');
     } catch (err) {
-      setError(parseError(err));
+      setError(parseError(err, tr));
     } finally {
       setLoading(false);
     }
@@ -426,7 +460,7 @@ export default function RegisterPage({ onRegister }) {
     e.preventDefault();
     setError(null);
     if (photoFiles.length < 1) {
-      setError('Add at least one profile photo to continue.');
+      setError(tr('register.error.addOnePhoto'));
       return;
     }
     setLoading(true);
@@ -449,7 +483,7 @@ export default function RegisterPage({ onRegister }) {
       setStep('done');
       setTimeout(() => navigate('/', { replace: true }), 1200);
     } catch (err) {
-      setError(parseError(err));
+      setError(parseError(err, tr));
     } finally {
       setLoading(false);
     }
@@ -468,18 +502,20 @@ export default function RegisterPage({ onRegister }) {
         return (
           <>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.95rem' }}>
-              Choose how you’d like to verify your account.
+              {tr('register.methodIntro')}
             </p>
             <button
               type="button"
               className="btn btn-primary"
               style={{ width: '100%', padding: '14px', marginBottom: '12px', fontWeight: 700 }}
               onClick={() => {
-                setMethod('email');
+                setMethod('phone');
+                setContact('');
+                setOptionalEmail('');
                 setStep('contact');
               }}
             >
-              Continue with Email
+              {tr('register.continueWithPhone')}
             </button>
             <button
               type="button"
@@ -494,11 +530,13 @@ export default function RegisterPage({ onRegister }) {
                 background: 'transparent',
               }}
               onClick={() => {
-                setMethod('phone');
+                setMethod('email');
+                setContact('');
+                setOptionalEmail('');
                 setStep('contact');
               }}
             >
-              Continue with Phone
+              {tr('register.signUpEmailOnly')}
             </button>
           </>
         );
@@ -521,7 +559,7 @@ export default function RegisterPage({ onRegister }) {
                   fontSize: '0.95rem',
                 }}
               >
-                {method === 'email' ? '📧 Email' : '📱 Phone'}
+                {method === 'email' ? tr('register.contact.emailLabel') : tr('register.contact.phoneLabel')}
                 <span style={{ color: '#c0392b' }}> *</span>
               </label>
               <input
@@ -530,14 +568,42 @@ export default function RegisterPage({ onRegister }) {
                 type={method === 'email' ? 'email' : 'tel'}
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
-                placeholder={method === 'email' ? 'you@example.com' : '090-1234-5678'}
+                placeholder={method === 'email' ? tr('register.contact.emailPlaceholder') : tr('register.contact.phonePlaceholder')}
                 autoComplete={method === 'email' ? 'email' : 'tel'}
                 disabled={loading}
               />
+              {method === 'phone' ? (
+                <div className="form-group" style={{ marginTop: 16 }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      marginBottom: 8,
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      fontSize: '0.95rem',
+                    }}
+                  >
+                    {tr('register.contact.optionalEmailLabel')}
+                    {' '}
+                    <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>{tr('common.optional')}</span>
+                  </label>
+                  <input
+                    className="form-input"
+                    style={{ width: '100%' }}
+                    type="email"
+                    value={optionalEmail}
+                    onChange={(e) => setOptionalEmail(e.target.value)}
+                    placeholder={tr('register.contact.emailPlaceholder')}
+                    autoComplete="email"
+                    disabled={loading}
+                  />
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginTop: 8 }}>
+                    {tr('register.contact.optionalEmailHint')}
+                  </p>
+                </div>
+              ) : null}
               <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginTop: 8 }}>
-                {method === 'phone'
-                  ? 'Japan numbers only for this Tokyo launch. SMS is simulated in dev — check server logs for the code, or use dev OTP 123456 if configured.'
-                  : 'We’ll send a 6-digit code. In dev, the code is logged on the server; you can also use dev OTP 123456 if configured.'}
+                {method === 'phone' ? tr('register.contact.hintPhone') : tr('register.contact.hintEmail')}
               </p>
             </div>
             {error ? (
@@ -546,7 +612,7 @@ export default function RegisterPage({ onRegister }) {
               </div>
             ) : null}
             <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: 14, fontWeight: 700 }} disabled={loading}>
-              {loading ? 'Sending…' : 'Send code'}
+              {loading ? tr('common.sending') : tr('register.sendCode')}
             </button>
             <button
               type="button"
@@ -554,7 +620,7 @@ export default function RegisterPage({ onRegister }) {
               style={{ marginTop: 12, width: '100%', background: 'transparent' }}
               onClick={() => setStep('method')}
             >
-              Back
+              {tr('common.back')}
             </button>
           </form>
         );
@@ -579,7 +645,8 @@ export default function RegisterPage({ onRegister }) {
                   fontSize: '0.9rem',
                 }}
               >
-                ✓ Code sent. {sendSuccess}
+                ✓ {tr('register.codeSentPrefix')}{' '}
+                {sendSuccess === 'email' ? tr('register.postSend.email') : tr('register.postSend.phone')}
               </div>
             ) : null}
             <div className="form-group">
@@ -591,7 +658,7 @@ export default function RegisterPage({ onRegister }) {
                   color: 'var(--text-primary)',
                   fontSize: '0.95rem',
                 }}
-              >6-digit code</label>
+              >{tr('register.digitCodeLabel')}</label>
               <input
                 className="form-input"
                 style={{ width: '100%', letterSpacing: '0.3em', fontSize: '1.2rem' }}
@@ -599,7 +666,7 @@ export default function RegisterPage({ onRegister }) {
                 autoComplete="one-time-code"
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="••••••"
+                placeholder={tr('register.codePlaceholder')}
                 disabled={loading}
               />
             </div>
@@ -609,10 +676,10 @@ export default function RegisterPage({ onRegister }) {
               </div>
             ) : null}
             <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: 14, fontWeight: 700 }} disabled={loading}>
-              {loading ? 'Checking…' : 'Verify'}
+              {loading ? tr('common.checking') : tr('register.verify')}
             </button>
             <button type="button" className="btn" style={{ marginTop: 12, width: '100%' }} onClick={goBack} disabled={loading}>
-              Back
+              {tr('common.back')}
             </button>
             <button
               type="button"
@@ -621,7 +688,7 @@ export default function RegisterPage({ onRegister }) {
               onClick={() => sendCode()}
               disabled={loading}
             >
-              Resend code
+              {tr('register.resendCode')}
             </button>
           </form>
         );
@@ -640,7 +707,7 @@ export default function RegisterPage({ onRegister }) {
                   color: 'var(--text-primary)',
                   fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)',
                 }}
-              >Password</label>
+              >{tr('auth.passwordLabel')}</label>
               <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -681,7 +748,7 @@ export default function RegisterPage({ onRegister }) {
                   color: 'var(--text-primary)',
                   fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)',
                 }}
-              >Confirm password</label>
+              >{tr('register.confirmPassword')}</label>
               <input
                 type="password"
                 className="form-input"
@@ -698,10 +765,10 @@ export default function RegisterPage({ onRegister }) {
               </div>
             ) : null}
             <button type="submit" className="btn btn-primary" style={primaryButtonStyle(loading)} disabled={loading}>
-              {loading ? 'Saving…' : 'Continue'}
+              {loading ? tr('common.saving') : tr('common.continue')}
             </button>
             <button type="button" className="btn" style={backButtonStyle(loading)} onClick={goBack} disabled={loading}>
-              Back
+              {tr('common.back')}
             </button>
           </form>
         );
@@ -709,7 +776,7 @@ export default function RegisterPage({ onRegister }) {
         return (
           <div>
             <p style={{ color: 'var(--text-secondary)', marginBottom: 16, fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)' }}>
-              How do you identify?
+              {tr('register.genderPrompt')}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {['MALE', 'FEMALE'].map((g) => (
@@ -731,7 +798,7 @@ export default function RegisterPage({ onRegister }) {
                     ...tap,
                   }}
                 >
-                  {g === 'MALE' ? 'Male' : 'Female'}
+                  {g === 'MALE' ? tr('profile.genderMale') : tr('profile.genderFemale')}
                 </button>
               ))}
             </div>
@@ -752,16 +819,16 @@ export default function RegisterPage({ onRegister }) {
                   await patchProfile({ gender, onboardingStep: 'BIRTHDAY' });
                   setStep('birthday');
                 } catch (err) {
-                  setError(parseError(err));
+                  setError(parseError(err, tr));
                 } finally {
                   setLoading(false);
                 }
               }}
             >
-              Continue
+              {tr('common.continue')}
             </button>
             <button type="button" className="btn" style={backButtonStyle(loading)} onClick={goBack} disabled={loading}>
-              Back
+              {tr('common.back')}
             </button>
           </div>
         );
@@ -773,7 +840,7 @@ export default function RegisterPage({ onRegister }) {
               e.preventDefault();
               setError(null);
               if (!birthday) {
-                setError('Please enter your birthday.');
+                setError(tr('register.error.enterBirthday'));
                 return;
               }
               setLoading(true);
@@ -781,7 +848,7 @@ export default function RegisterPage({ onRegister }) {
                 await patchProfile({ birthday, onboardingStep: 'LOCATION' });
                 setStep('location');
               } catch (err) {
-                setError(parseError(err));
+                setError(parseError(err, tr));
               } finally {
                 setLoading(false);
               }
@@ -796,7 +863,7 @@ export default function RegisterPage({ onRegister }) {
                   color: 'var(--text-primary)',
                   fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)',
                 }}
-              >Birthday</label>
+              >{tr('profile.birthday')}</label>
               <input
                 type="date"
                 className="form-input"
@@ -806,7 +873,7 @@ export default function RegisterPage({ onRegister }) {
                 disabled={loading}
               />
               <p style={{ fontSize: 'clamp(0.78rem, 2.5vw, 0.85rem)', color: 'var(--text-light)', marginTop: 8 }}>
-                You must be 18 or older.
+                {tr('register.mustBe18')}
               </p>
             </div>
             {error ? (
@@ -815,10 +882,10 @@ export default function RegisterPage({ onRegister }) {
               </div>
             ) : null}
             <button type="submit" className="btn btn-primary" style={primaryButtonStyle(loading)} disabled={loading}>
-              Continue
+              {tr('common.continue')}
             </button>
             <button type="button" className="btn" style={backButtonStyle(loading)} onClick={goBack} disabled={loading}>
-              Back
+              {tr('common.back')}
             </button>
           </form>
         );
@@ -834,11 +901,11 @@ export default function RegisterPage({ onRegister }) {
                   color: 'var(--text-primary)',
                   fontSize: '0.95rem',
                 }}
-              >Tokyo area</label>
+              >{tr('register.title.location')}</label>
               <input
                 className="form-input"
                 style={{ width: '100%', marginBottom: 8, minHeight: 48, fontSize: 'clamp(16px, 4vw, 1rem)' }}
-                placeholder="Search ward / city…"
+                placeholder={tr('register.placeholder.searchWard')}
                 value={wardQuery}
                 onChange={(e) => setWardQuery(e.target.value)}
               />
@@ -874,7 +941,7 @@ export default function RegisterPage({ onRegister }) {
                       onChange={() => setWard(w)}
                       style={radioSize}
                     />
-                    <span style={{ flex: 1, lineHeight: 1.35 }}>{w}</span>
+                    <span style={{ flex: 1, lineHeight: 1.35 }}>{labelTokyoWard(w, tr)}</span>
                   </label>
                 ))}
               </div>
@@ -896,16 +963,16 @@ export default function RegisterPage({ onRegister }) {
                   await patchProfile({ city: ward, onboardingStep: 'NICKNAME' });
                   setStep('nickname');
                 } catch (err) {
-                  setError(parseError(err));
+                  setError(parseError(err, tr));
                 } finally {
                   setLoading(false);
                 }
               }}
             >
-              Continue
+              {tr('common.continue')}
             </button>
             <button type="button" className="btn" style={backButtonStyle(loading)} onClick={goBack} disabled={loading}>
-              Back
+              {tr('common.back')}
             </button>
           </div>
         );
@@ -918,7 +985,7 @@ export default function RegisterPage({ onRegister }) {
               setError(null);
               const n = nickname.trim();
               if (n.length < 2 || n.length > 30) {
-                setError('Nickname must be 2–30 characters.');
+                setError(tr('register.error.nicknameLength'));
                 return;
               }
               setLoading(true);
@@ -926,7 +993,7 @@ export default function RegisterPage({ onRegister }) {
                 await patchProfile({ displayName: n, onboardingStep: 'LEGAL' });
                 setStep('legal');
               } catch (err) {
-                setError(parseError(err));
+                setError(parseError(err, tr));
               } finally {
                 setLoading(false);
               }
@@ -941,7 +1008,14 @@ export default function RegisterPage({ onRegister }) {
                   color: 'var(--text-primary)',
                   fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)',
                 }}
-              >Nickname</label>
+              >
+                {tr('register.nickname.label')}
+                {' '}
+                <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>{tr('register.nickname.publicHint')}</span>
+              </label>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: -4, marginBottom: 10 }}>
+                {tr('register.nickname.description')}
+              </p>
               <input
                 className="form-input"
                 style={{ width: '100%', minHeight: 48, fontSize: 'clamp(16px, 4vw, 1rem)' }}
@@ -949,7 +1023,7 @@ export default function RegisterPage({ onRegister }) {
                 onChange={(e) => setNickname(e.target.value)}
                 maxLength={30}
                 disabled={loading}
-                placeholder="How you appear on YouMe"
+                placeholder={tr('register.nickname.placeholder')}
               />
             </div>
             {error ? (
@@ -958,10 +1032,10 @@ export default function RegisterPage({ onRegister }) {
               </div>
             ) : null}
             <button type="submit" className="btn btn-primary" style={primaryButtonStyle(loading)} disabled={loading}>
-              Continue
+              {tr('common.continue')}
             </button>
             <button type="button" className="btn" style={backButtonStyle(loading)} onClick={goBack} disabled={loading}>
-              Back
+              {tr('common.back')}
             </button>
           </form>
         );
@@ -969,12 +1043,12 @@ export default function RegisterPage({ onRegister }) {
         return (
           <div>
             {[
-              ['I am 18 or older', legalOver18, setLegalOver18],
-              ['I agree to the Terms of Service', legalTos, setLegalTos],
-              ['I agree to the Privacy Policy', legalPrivacy, setLegalPrivacy],
-            ].map(([label, checked, set]) => (
+              ['over18', legalOver18, setLegalOver18],
+              ['tos', legalTos, setLegalTos],
+              ['privacy', legalPrivacy, setLegalPrivacy],
+            ].map(([key, checked, set]) => (
               <label
-                key={label}
+                key={key}
                 style={{
                   display: 'flex',
                   gap: 14,
@@ -992,7 +1066,7 @@ export default function RegisterPage({ onRegister }) {
                   onChange={(e) => set(e.target.checked)}
                   style={checkSize}
                 />
-                <span style={{ fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)', lineHeight: 1.4, flex: 1 }}>{label}</span>
+                <span style={{ fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)', lineHeight: 1.4, flex: 1 }}>{tr(`register.legal.${key}`)}</span>
               </label>
             ))}
             {error ? (
@@ -1016,16 +1090,16 @@ export default function RegisterPage({ onRegister }) {
                   });
                   setStep('basics');
                 } catch (err) {
-                  setError(parseError(err));
+                  setError(parseError(err, tr));
                 } finally {
                   setLoading(false);
                 }
               }}
             >
-              Continue
+              {tr('common.continue')}
             </button>
             <button type="button" className="btn" style={backButtonStyle(loading)} onClick={goBack} disabled={loading}>
-              Back
+              {tr('common.back')}
             </button>
           </div>
         );
@@ -1038,11 +1112,11 @@ export default function RegisterPage({ onRegister }) {
               setError(null);
               const h = parseInt(heightCm, 10);
               if (!Number.isFinite(h) || h < 120 || h > 230) {
-                setError('Enter a valid height between 120 and 230 cm.');
+                setError(tr('register.error.heightRange'));
                 return;
               }
               if (!relationshipIntention.trim() || !drinking.trim() || !smoking.trim() || !living.trim()) {
-                setError('Please complete relationship intention, drinking, smoking, and living situation.');
+                setError(tr('register.error.completeBasics'));
                 return;
               }
               setLoading(true);
@@ -1065,7 +1139,7 @@ export default function RegisterPage({ onRegister }) {
                 });
                 setStep('interests');
               } catch (err) {
-                setError(parseError(err));
+                setError(parseError(err, tr));
               } finally {
                 setLoading(false);
               }
@@ -1081,7 +1155,8 @@ export default function RegisterPage({ onRegister }) {
                   fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)',
                 }}
               >
-                Height (cm)<span style={{ color: '#c0392b' }}> *</span>
+                {tr('register.basics.height')}
+                <span style={{ color: '#c0392b' }}> *</span>
               </label>
               <input
                 type="number"
@@ -1103,14 +1178,16 @@ export default function RegisterPage({ onRegister }) {
                   fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)',
                 }}
               >
-                Education <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>(optional)</span>
+                {tr('profile.education')}
+                {' '}
+                <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>{tr('common.optional')}</span>
               </label>
               <input
                 className="form-input"
                 style={{ width: '100%', minHeight: 48, fontSize: 'clamp(16px, 4vw, 1rem)' }}
                 value={education}
                 onChange={(e) => setEducation(e.target.value)}
-                placeholder="e.g. University"
+                placeholder={tr('register.basics.educationPlaceholder')}
               />
             </div>
             <div className="form-group">
@@ -1123,14 +1200,16 @@ export default function RegisterPage({ onRegister }) {
                   fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)',
                 }}
               >
-                Occupation <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>(optional)</span>
+                {tr('register.basics.occupation')}
+                {' '}
+                <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>{tr('common.optional')}</span>
               </label>
               <input
                 className="form-input"
                 style={{ width: '100%', minHeight: 48, fontSize: 'clamp(16px, 4vw, 1rem)' }}
                 value={occupation}
                 onChange={(e) => setOccupation(e.target.value)}
-                placeholder="e.g. Engineer"
+                placeholder={tr('register.basics.occupationPlaceholder')}
               />
             </div>
             <div className="form-group">
@@ -1143,7 +1222,9 @@ export default function RegisterPage({ onRegister }) {
                   fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)',
                 }}
               >
-                Annual income <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>(optional)</span>
+                {tr('register.basics.annualIncome')}
+                {' '}
+                <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>{tr('common.optional')}</span>
               </label>
               <select
                 className="form-input"
@@ -1151,12 +1232,12 @@ export default function RegisterPage({ onRegister }) {
                 value={incomeBand}
                 onChange={(e) => setIncomeBand(e.target.value)}
               >
-                <option value="">Prefer not to say</option>
-                <option value="UNDER_4M">Under ¥4M</option>
-                <option value="M4_6M">¥4M – ¥6M</option>
-                <option value="M6_8M">¥6M – ¥8M</option>
-                <option value="M8_10M">¥8M – ¥10M</option>
-                <option value="OVER_10M">¥10M+</option>
+                <option value="">{tr('register.income.preferNot')}</option>
+                <option value="UNDER_4M">{tr('register.income.under4m')}</option>
+                <option value="M4_6M">{tr('register.income.m4_6m')}</option>
+                <option value="M6_8M">{tr('register.income.m6_8m')}</option>
+                <option value="M8_10M">{tr('register.income.m8_10m')}</option>
+                <option value="OVER_10M">{tr('register.income.over10m')}</option>
               </select>
             </div>
             <div className="form-group">
@@ -1169,7 +1250,8 @@ export default function RegisterPage({ onRegister }) {
                   fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)',
                 }}
               >
-                Relationship intention<span style={{ color: '#c0392b' }}> *</span>
+                {tr('register.basics.relationshipIntention')}
+                <span style={{ color: '#c0392b' }}> *</span>
               </label>
               <select
                 className="form-input"
@@ -1177,10 +1259,10 @@ export default function RegisterPage({ onRegister }) {
                 value={relationshipIntention}
                 onChange={(e) => setRelationshipIntention(e.target.value)}
               >
-                <option value="">Select…</option>
-                <option value="CASUAL">Casual dating</option>
-                <option value="SERIOUS">Serious / marriage-minded</option>
-                <option value="OPEN">Open to both</option>
+                <option value="">{tr('common.selectPlaceholder')}</option>
+                <option value="CASUAL">{tr('register.relInt.casual')}</option>
+                <option value="SERIOUS">{tr('register.relInt.serious')}</option>
+                <option value="OPEN">{tr('register.relInt.open')}</option>
               </select>
             </div>
             <div className="form-group">
@@ -1193,7 +1275,8 @@ export default function RegisterPage({ onRegister }) {
                   fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)',
                 }}
               >
-                Drinking<span style={{ color: '#c0392b' }}> *</span>
+                {tr('discover.settings.filter.drinking')}
+                <span style={{ color: '#c0392b' }}> *</span>
               </label>
               <select
                 className="form-input"
@@ -1201,10 +1284,10 @@ export default function RegisterPage({ onRegister }) {
                 value={drinking}
                 onChange={(e) => setDrinking(e.target.value)}
               >
-                <option value="">Select…</option>
-                <option value="NEVER">Never</option>
-                <option value="SOMETIMES">Sometimes</option>
-                <option value="OFTEN">Often</option>
+                <option value="">{tr('common.selectPlaceholder')}</option>
+                <option value="NEVER">{tr('register.onboardDrinking.never')}</option>
+                <option value="SOMETIMES">{tr('register.onboardDrinking.sometimes')}</option>
+                <option value="OFTEN">{tr('register.onboardDrinking.often')}</option>
               </select>
             </div>
             <div className="form-group">
@@ -1217,7 +1300,8 @@ export default function RegisterPage({ onRegister }) {
                   fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)',
                 }}
               >
-                Smoking<span style={{ color: '#c0392b' }}> *</span>
+                {tr('discover.settings.filter.smoking')}
+                <span style={{ color: '#c0392b' }}> *</span>
               </label>
               <select
                 className="form-input"
@@ -1225,10 +1309,10 @@ export default function RegisterPage({ onRegister }) {
                 value={smoking}
                 onChange={(e) => setSmoking(e.target.value)}
               >
-                <option value="">Select…</option>
-                <option value="NO">No</option>
-                <option value="SOCIAL">Socially</option>
-                <option value="YES">Yes</option>
+                <option value="">{tr('common.selectPlaceholder')}</option>
+                <option value="NO">{tr('register.onboardSmoking.no')}</option>
+                <option value="SOCIAL">{tr('register.onboardSmoking.social')}</option>
+                <option value="YES">{tr('register.onboardSmoking.yes')}</option>
               </select>
             </div>
             <div className="form-group">
@@ -1241,7 +1325,8 @@ export default function RegisterPage({ onRegister }) {
                   fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)',
                 }}
               >
-                Living situation<span style={{ color: '#c0392b' }}> *</span>
+                {tr('register.basics.livingSituation')}
+                <span style={{ color: '#c0392b' }}> *</span>
               </label>
               <select
                 className="form-input"
@@ -1249,11 +1334,11 @@ export default function RegisterPage({ onRegister }) {
                 value={living}
                 onChange={(e) => setLiving(e.target.value)}
               >
-                <option value="">Select…</option>
-                <option value="ALONE">Live alone</option>
-                <option value="FAMILY">With family</option>
-                <option value="ROOMMATES">Roommates</option>
-                <option value="OTHER">Other</option>
+                <option value="">{tr('common.selectPlaceholder')}</option>
+                <option value="ALONE">{tr('register.living.alone')}</option>
+                <option value="FAMILY">{tr('register.living.family')}</option>
+                <option value="ROOMMATES">{tr('register.living.roommates')}</option>
+                <option value="OTHER">{tr('register.living.other')}</option>
               </select>
             </div>
             {error ? (
@@ -1262,10 +1347,10 @@ export default function RegisterPage({ onRegister }) {
               </div>
             ) : null}
             <button type="submit" className="btn btn-primary" style={primaryButtonStyle(loading)} disabled={loading}>
-              Continue
+              {tr('common.continue')}
             </button>
             <button type="button" className="btn" style={backButtonStyle(loading)} onClick={goBack} disabled={loading}>
-              Back
+              {tr('common.back')}
             </button>
           </form>
         );
@@ -1275,7 +1360,7 @@ export default function RegisterPage({ onRegister }) {
             <input
               className="form-input"
               style={{ width: '100%', marginBottom: 12, minHeight: 48, fontSize: 'clamp(16px, 4vw, 1rem)' }}
-              placeholder="Search interests…"
+              placeholder={tr('register.interests.searchPlaceholder')}
               value={interestSearch}
               onChange={(e) => setInterestSearch(e.target.value)}
             />
@@ -1296,7 +1381,7 @@ export default function RegisterPage({ onRegister }) {
                     ...tap,
                   }}
                 >
-                  {h}
+                  {tr(`register.hobbyPreset.${HOBBY_PRESET_I18N[h]}`)}
                 </button>
               ))}
             </div>
@@ -1317,16 +1402,16 @@ export default function RegisterPage({ onRegister }) {
                   await patchProfile({ interests, onboardingStep: 'ATTRIBUTION' });
                   setStep('attribution');
                 } catch (err) {
-                  setError(parseError(err));
+                  setError(parseError(err, tr));
                 } finally {
                   setLoading(false);
                 }
               }}
             >
-              Continue
+              {tr('common.continue')}
             </button>
             <button type="button" className="btn" style={backButtonStyle(loading)} onClick={goBack} disabled={loading}>
-              Back
+              {tr('common.back')}
             </button>
           </div>
         );
@@ -1334,7 +1419,7 @@ export default function RegisterPage({ onRegister }) {
         return (
           <div>
             <p style={{ color: 'var(--text-secondary)', marginBottom: 12, fontSize: 'clamp(0.9rem, 2.8vw, 0.95rem)' }}>
-              How did you find YouMe? (optional)
+              {tr('register.attribution.prompt')}
             </p>
             <div className="form-group">
               <select
@@ -1343,10 +1428,10 @@ export default function RegisterPage({ onRegister }) {
                 value={referralSource}
                 onChange={(e) => setReferralSource(e.target.value)}
               >
-                <option value="">Prefer not to say</option>
-                {REFERRAL_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
+                <option value="">{tr('register.income.preferNot')}</option>
+                {REFERRAL_VALUES.map((v) => (
+                  <option key={v} value={v}>
+                    {tr(`register.referral.${v}`)}
                   </option>
                 ))}
               </select>
@@ -1365,16 +1450,16 @@ export default function RegisterPage({ onRegister }) {
                   await patchProfile(body);
                   setStep('photos');
                 } catch (err) {
-                  setError(parseError(err));
+                  setError(parseError(err, tr));
                 } finally {
                   setLoading(false);
                 }
               }}
             >
-              Continue
+              {tr('common.continue')}
             </button>
             <button type="button" className="btn" style={backButtonStyle(loading)} onClick={goBack} disabled={loading}>
-              Back
+              {tr('common.back')}
             </button>
           </div>
         );
@@ -1389,8 +1474,7 @@ export default function RegisterPage({ onRegister }) {
                 lineHeight: 1.45,
               }}
             >
-              Add at least one clear photo. The first photo is your main profile picture. This is the last step — then
-              your account is created.
+              {tr('register.photos.intro')}
             </p>
             <input
               type="file"
@@ -1442,7 +1526,7 @@ export default function RegisterPage({ onRegister }) {
                           zIndex: 1,
                         }}
                       >
-                        Main
+                        {tr('register.photos.mainBadge')}
                       </span>
                     ) : null}
                     <img src={p.previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1485,10 +1569,10 @@ export default function RegisterPage({ onRegister }) {
               style={{ ...primaryButtonStyle(photoFiles.length < 1 || loading), marginTop: 16 }}
               disabled={photoFiles.length < 1 || loading}
             >
-              {loading ? 'Creating account…' : 'Create account'}
+              {loading ? tr('register.creatingAccount') : tr('register.createAccount')}
             </button>
             <button type="button" className="btn" style={backButtonStyle(loading)} onClick={goBack} disabled={loading}>
-              Back
+              {tr('common.back')}
             </button>
           </form>
         );
@@ -1496,8 +1580,8 @@ export default function RegisterPage({ onRegister }) {
         return (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
             <div style={{ fontSize: '3rem', marginBottom: 12 }}>🎉</div>
-            <p style={{ fontWeight: 700, color: 'var(--text-primary)' }}>You’re in!</p>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Taking you to Discover…</p>
+            <p style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{tr('register.done.headline')}</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{tr('register.done.redirect')}</p>
           </div>
         );
       default:
@@ -1505,34 +1589,7 @@ export default function RegisterPage({ onRegister }) {
     }
   };
 
-  const title =
-    step === 'method'
-      ? 'Join YouMe'
-      : step === 'contact' || step === 'verify'
-        ? 'Verify it’s you'
-        : step === 'password'
-          ? 'Set your password'
-          : step === 'gender'
-            ? 'Gender'
-            : step === 'birthday'
-              ? 'Birthday'
-              : step === 'location'
-                ? 'Tokyo area'
-                : step === 'nickname'
-                  ? 'Nickname'
-                  : step === 'legal'
-                    ? 'Terms & safety'
-                    : step === 'basics'
-                      ? 'About you'
-                      : step === 'interests'
-                        ? 'Interests'
-                        : step === 'attribution'
-                          ? 'Almost there'
-                          : step === 'photos'
-                            ? 'Photos'
-                            : step === 'done'
-                              ? 'Welcome'
-                              : 'Sign up';
+  const title = tr(`register.title.${step}`, { defaultValue: tr('register.title.fallback') });
 
   const showProgress = !['method', 'contact', 'verify', 'password', 'done'].includes(step);
 
@@ -1549,7 +1606,7 @@ export default function RegisterPage({ onRegister }) {
       }}
     >
       <div className="loading" style={{ color: 'var(--text-secondary)' }}>
-          Loading your sign-up…
+          {tr('register.booting')}
         </div>
       </div>
     );
@@ -1579,16 +1636,21 @@ export default function RegisterPage({ onRegister }) {
           >
             {title}
           </h1>
-          {showProgress ? <ProgressBar phase={profileProgress.phase} total={profileProgress.total} /> : null}
+          {showProgress ? <ProgressBar phase={profileProgress.phase} total={profileProgress.total} t={tr} /> : null}
+          <p style={{ margin: '8px 0 0 0', fontSize: '0.88rem' }}>
+            <Link to="/language?next=/register" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
+              {tr('lang.changeLink')}
+            </Link>
+          </p>
         </div>
 
         <div className="card auth-card-stagger" style={{ padding: 'clamp(24px, 5vw, 32px)' }}>
           {renderBody()}
           {['method', 'done'].includes(step) ? (
             <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: 24, marginBottom: 0, fontSize: '0.95rem' }}>
-              Already have an account?{' '}
+              {tr('register.footerHasAccount')}{' '}
               <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'none' }}>
-                Sign in
+                {tr('register.footerSignIn')}
               </Link>
             </p>
           ) : null}

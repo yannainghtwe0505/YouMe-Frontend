@@ -1,18 +1,21 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 
 const MAX_PHOTOS = 6;
 
-function errMessage(err) {
+function errMessage(err, t) {
   const d = err.response?.data;
-  if (d == null) return err.message || 'Something went wrong';
+  const fb = t('errors.generic');
+  if (d == null) return err.message || fb;
   if (typeof d === 'string') return d;
   if (typeof d.error === 'string') return d.error;
-  return err.message || 'Something went wrong';
+  return err.message || fb;
 }
 
 export default function PhotosPage() {
+  const { t } = useTranslation();
   const [photos, setPhotos] = useState([]);
   const [listLoading, setListLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -26,25 +29,25 @@ export default function PhotosPage() {
       const res = await api.get('/photos');
       setPhotos(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      setError(errMessage(err));
+      setError(errMessage(err, t));
     } finally {
       setListLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadPhotos();
   }, [loadPhotos]);
 
   const removePhoto = async (id) => {
-    if (!window.confirm('Remove this photo?')) return;
+    if (!window.confirm(t('photos.confirmRemove'))) return;
     setBusyPhotoId(id);
     setError(null);
     try {
       await api.delete(`/photos/${id}`);
       await loadPhotos();
     } catch (err) {
-      setError(errMessage(err));
+      setError(errMessage(err, t));
     } finally {
       setBusyPhotoId(null);
     }
@@ -57,7 +60,7 @@ export default function PhotosPage() {
       await api.put(`/photos/${id}/primary`);
       await loadPhotos();
     } catch (err) {
-      setError(errMessage(err));
+      setError(errMessage(err, t));
     } finally {
       setBusyPhotoId(null);
     }
@@ -69,7 +72,7 @@ export default function PhotosPage() {
     if (!file) return;
 
     if (photos.length >= MAX_PHOTOS) {
-      setError(`You already have ${MAX_PHOTOS} photos. Remove one before adding another.`);
+      setError(t('photos.errorMaxPhotos', { max: MAX_PHOTOS }));
       return;
     }
 
@@ -85,7 +88,7 @@ export default function PhotosPage() {
       );
       const { uploadUrl, s3Key } = presign.data;
       if (!uploadUrl || !s3Key) {
-        setError('Invalid response from server.');
+        setError(t('photos.errorInvalidResponse'));
         return;
       }
 
@@ -95,14 +98,14 @@ export default function PhotosPage() {
         headers: { 'Content-Type': contentType },
       });
       if (!putRes.ok) {
-        setError(`Upload failed (${putRes.status}). Check storage configuration.`);
+        setError(t('photos.errorUploadFailed', { status: putRes.status }));
         return;
       }
 
       await api.post(`/photos/complete?s3Key=${encodeURIComponent(s3Key)}`);
       await loadPhotos();
     } catch (err) {
-      setError(errMessage(err));
+      setError(errMessage(err, t));
     } finally {
       setUploading(false);
     }
@@ -122,15 +125,15 @@ export default function PhotosPage() {
             marginBottom: '8px',
           }}
           >
-            Photos
+            {t('photos.title')}
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
-            Up to {MAX_PHOTOS} photos — shown on your profile and in Discover.
+            {t('photos.subtitle', { max: MAX_PHOTOS })}
             {' '}
-            <Link to="/profile">Back to profile</Link>
+            <Link to="/profile">{t('photos.backToProfile')}</Link>
           </p>
           <p style={{ fontSize: '15px', fontWeight: 600, marginTop: '12px', color: 'var(--text-primary)' }}>
-            {listLoading ? '…' : `${count} / ${MAX_PHOTOS}`}
+            {listLoading ? '…' : t('photos.count', { count, max: MAX_PHOTOS })}
           </p>
         </div>
 
@@ -155,14 +158,14 @@ export default function PhotosPage() {
                 pointerEvents: atLimit || uploading || listLoading ? 'none' : 'auto',
               }}
             >
-              {uploading ? 'Uploading…' : atLimit ? 'Photo limit reached' : 'Add photo'}
+              {uploading ? t('photos.uploading') : atLimit ? t('photos.atLimit') : t('photos.add')}
             </span>
           </label>
         </div>
 
         {listLoading ? (
           <div className="loading" style={{ padding: '24px', textAlign: 'center' }}>
-            <div className="pulse">Loading photos…</div>
+            <div className="pulse">{t('photos.loading')}</div>
           </div>
         ) : (
           <div
@@ -187,7 +190,7 @@ export default function PhotosPage() {
                   border: p.primary ? '2px solid var(--primary)' : '1px solid var(--bg-secondary)',
                   position: 'relative',
                 }}
-                title={p.primary ? 'Primary photo' : ''}
+                title={p.primary ? t('photos.primaryTooltip') : ''}
               >
                 {p.primary ? (
                   <span
@@ -203,7 +206,7 @@ export default function PhotosPage() {
                       color: '#fff',
                     }}
                   >
-                    Main
+                    {t('photos.mainBadge')}
                   </span>
                 ) : null}
                 <div className="photo-cell-actions">
@@ -214,7 +217,7 @@ export default function PhotosPage() {
                       disabled={busyPhotoId != null || listLoading}
                       onClick={() => makePrimary(p.id)}
                     >
-                      {busyPhotoId === p.id ? '…' : 'Make main'}
+                      {busyPhotoId === p.id ? '…' : t('photos.makeMain')}
                     </button>
                   ) : null}
                   <button
@@ -223,7 +226,7 @@ export default function PhotosPage() {
                     disabled={busyPhotoId != null || listLoading}
                     onClick={() => removePhoto(p.id)}
                   >
-                    {busyPhotoId === p.id ? '…' : 'Remove'}
+                    {busyPhotoId === p.id ? '…' : t('photos.remove')}
                   </button>
                 </div>
               </div>

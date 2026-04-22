@@ -68,7 +68,7 @@ Protected routes redirect to `/login` when there is no token (`App.jsx`).
 
 ## 5. Auth & HTTP (`api.js`)
 
-- **Base URL:** `http://localhost:8090` by default—change for staging/production.
+- **Base URL:** from **`VITE_API_URL`** (`.env.development` / `.env.production`) via `src/config/urls.js` — see [../docs/ENVIRONMENT_URLS.md](../docs/ENVIRONMENT_URLS.md).
 - **JWT:** Sent as `Authorization: Bearer <token>` for all requests **except** paths starting with `/auth/login` and `/auth/register`.
 - **401:** Clears token and redirects to `/login` for non-auth requests (failed login still shows inline error).
 

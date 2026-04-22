@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { API_BASE_URL } from './config/urls.js';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8090',
+  baseURL: API_BASE_URL,
 });
 
 /** Path portion of the request, for matching public auth routes. */

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { createMatchChatSocket } from '../chatSocket';
 import { cssUrlValue } from '../imageUtils';
@@ -7,7 +8,45 @@ import { cssUrlValue } from '../imageUtils';
 /** Backup polling when WebSocket is down (ms). */
 const POLL_BACKUP_MS = 22000;
 
+const SUGGESTION_ICONS = {
+  emotional_support: '❤️',
+  advice: '🧠',
+  casual: '💬',
+  flirty: '😏',
+  question: '❓',
+  suggestion: '✨',
+};
+
+const ALLOWED_TYPES = new Set(Object.keys(SUGGESTION_ICONS));
+
+/**
+ * API may return legacy string[] or { text, type }[].
+ */
+function normalizeReplyIdeas(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item, i) => {
+      let text = '';
+      let type = 'suggestion';
+      if (typeof item === 'string') {
+        text = item;
+      } else if (item && typeof item === 'object') {
+        text = typeof item.text === 'string' ? item.text : '';
+        const t = typeof item.type === 'string'
+          ? item.type.trim().toLowerCase().replace(/-/g, '_').replace(/\s+/g, '_')
+          : '';
+        if (ALLOWED_TYPES.has(t)) type = t;
+      }
+      text = text.trim();
+      if (!text) return null;
+      const id = `s-${i}-${text.slice(0, 32)}`;
+      return { id, text, type };
+    })
+    .filter(Boolean);
+}
+
 export default function MessagesPage() {
+  const { t } = useTranslation();
   const { matchId } = useParams();
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
@@ -20,13 +59,35 @@ export default function MessagesPage() {
   const [llmConfigured, setLlmConfigured] = useState(false);
   const [replyIdeas, setReplyIdeas] = useState([]);
   const [replyLoading, setReplyLoading] = useState(false);
+  const [aiQuota, setAiQuota] = useState(null);
+  /** Fade-out then clear suggestions after user sends a message */
+  const [ideasExiting, setIdeasExiting] = useState(false);
+  /** Bumps when a new suggestion batch loads (enter animation) */
+  const [suggestionsBatchKey, setSuggestionsBatchKey] = useState(0);
   const messagesEndRef = useRef(null);
   const menuWrapRef = useRef(null);
   const icebreakerAttempted = useRef(false);
+  const exitTimerRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  const clearSuggestionsAfterExit = useCallback(() => {
+    if (exitTimerRef.current) {
+      clearTimeout(exitTimerRef.current);
+      exitTimerRef.current = null;
+    }
+    exitTimerRef.current = window.setTimeout(() => {
+      setReplyIdeas([]);
+      setIdeasExiting(false);
+      exitTimerRef.current = null;
+    }, 240);
+  }, []);
+
+  useEffect(() => () => {
+    if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+  }, []);
 
   const loadMessages = useCallback(
     async ({ silent = false } = {}) => {
@@ -46,12 +107,12 @@ export default function MessagesPage() {
         api.post(`/matches/${matchId}/read`).catch(() => {});
       } catch (err) {
         if (!silent) {
-          setError(err.response?.status === 403 ? 'You are not part of this match.' : 'Failed to load messages');
+          setError(err.response?.status === 403 ? t('messages.errorForbidden') : t('messages.errorLoadMessages'));
           setLoading(false);
         }
       }
     },
-    [matchId]
+    [matchId, t]
   );
 
   useEffect(() => {
@@ -80,6 +141,22 @@ export default function MessagesPage() {
     api.get('/ai/capabilities')
       .then((res) => setLlmConfigured(Boolean(res.data?.llmConfigured)))
       .catch(() => setLlmConfigured(false));
+  }, [matchId]);
+
+  useEffect(() => {
+    api.get('/me')
+      .then((r) => {
+        const cr = r.data?.aiEntitlements?.['chat-reply'];
+        const q = cr && typeof cr === 'object' ? cr : r.data?.aiQuota;
+        if (q && typeof q === 'object') {
+          setAiQuota({
+            remaining: Number(q.remaining ?? 0),
+            dailyLimit: Number(q.dailyLimit) || 0,
+            fairUseCap: Boolean(q.fairUseCap),
+          });
+        }
+      })
+      .catch(() => {});
   }, [matchId]);
 
   useEffect(() => {
@@ -134,15 +211,48 @@ export default function MessagesPage() {
     return () => clearInterval(id);
   }, [loadMessages]);
 
+  const suggestionLabel = useCallback(
+    (type) => t(`messages.suggestionType.${type}`, { defaultValue: t('messages.suggestionType.suggestion') }),
+    [t],
+  );
+
   const fetchReplyIdeas = async () => {
     if (!matchId) return;
+    setIdeasExiting(false);
+    if (exitTimerRef.current) {
+      clearTimeout(exitTimerRef.current);
+      exitTimerRef.current = null;
+    }
     setReplyLoading(true);
     setReplyIdeas([]);
+    setError(null);
     try {
       const res = await api.post(`/matches/${matchId}/assistant/reply-ideas`, { tone: 'warm and playful' });
-      setReplyIdeas(Array.isArray(res.data?.ideas) ? res.data.ideas : []);
-    } catch {
+      const next = normalizeReplyIdeas(res.data?.ideas);
+      setSuggestionsBatchKey((k) => k + 1);
+      setReplyIdeas(next);
+      const q = res.data?.aiQuota;
+      if (q && typeof q === 'object') {
+        setAiQuota({
+          remaining: Number(q.remaining ?? 0),
+          dailyLimit: Number(q.dailyLimit) || 0,
+          fairUseCap: Boolean(q.fairUseCap),
+        });
+      }
+    } catch (err) {
       setReplyIdeas([]);
+      if (err.response?.status === 429) {
+        const q = err.response?.data?.aiQuota;
+        if (q && typeof q === 'object') {
+          setAiQuota({
+            remaining: Number(q.remaining ?? 0),
+            dailyLimit: Number(q.dailyLimit) || 0,
+            fairUseCap: Boolean(q.fairUseCap),
+          });
+        }
+        const hint = err.response?.data?.upgradeHint;
+        setError(hint || t('messages.quotaError'));
+      }
     } finally {
       setReplyLoading(false);
     }
@@ -171,19 +281,19 @@ export default function MessagesPage() {
   }, [menuOpen]);
 
   const unmatch = async () => {
-    if (!window.confirm('Unmatch and delete this conversation?')) return;
+    if (!window.confirm(t('messages.confirmUnmatch'))) return;
     try {
       await api.delete(`/matches/${matchId}`);
       navigate('/messages');
     } catch {
-      setError('Could not unmatch');
+      setError(t('messages.errorUnmatch'));
     }
     setMenuOpen(false);
   };
 
   const blockPeer = async () => {
     if (!peer?.userId) return;
-    if (!window.confirm('Block this person? They will disappear from Discover and you will not be able to message each other.')) return;
+    if (!window.confirm(t('messages.confirmBlock'))) return;
     try {
       await api.post(`/blocks/${peer.userId}`);
       try {
@@ -193,7 +303,7 @@ export default function MessagesPage() {
       }
       navigate('/messages');
     } catch {
-      setError('Could not block user');
+      setError(t('messages.errorBlock'));
     }
     setMenuOpen(false);
   };
@@ -201,15 +311,20 @@ export default function MessagesPage() {
   const sendMessage = async () => {
     if (!body.trim()) return;
 
+    const hadSuggestions = replyIdeas.length > 0;
     setSending(true);
     setError(null);
 
     try {
       await api.post(`/matches/${matchId}/messages`, { body });
       setBody('');
+      if (hadSuggestions) {
+        setIdeasExiting(true);
+        clearSuggestionsAfterExit();
+      }
       await loadMessages({ silent: true });
     } catch {
-      setError('Failed to send message');
+      setError(t('messages.errorSend'));
     } finally {
       setSending(false);
     }
@@ -222,17 +337,23 @@ export default function MessagesPage() {
     }
   };
 
+  const pickSuggestion = (text) => {
+    setBody(text);
+  };
+
   if (loading) return (
     <div className="loading fade-in">
-      <div className="pulse">Loading messages...</div>
+      <div className="pulse">{t('messages.loading')}</div>
     </div>
   );
 
+  const showSuggestionRail = replyIdeas.length > 0;
+
   return (
     <div className="fade-in">
-      <div className="card">
+      <div className="card chat-page-card">
         <div className="chat-header">
-          <Link to="/messages" className="chat-back" aria-label="Back to conversations">‹</Link>
+          <Link to="/messages" className="chat-back" aria-label={t('messages.backToListAria')}>‹</Link>
           <div
             className={`avatar-small chat-header-avatar${peer?.avatar ? '' : ' chat-header-avatar--placeholder'}`}
             style={peer?.avatar ? {
@@ -244,10 +365,10 @@ export default function MessagesPage() {
             {peer?.avatar ? '' : '💬'}
           </div>
           <div className="chat-header-text">
-            <h1>{peer?.name || 'Chat'}</h1>
+            <h1>{peer?.name || t('messages.chatFallbackTitle')}</h1>
             <p>
-              {peer?.name ? 'Matched' : `Match #${matchId}`}
-              {llmConfigured ? <span className="chat-ai-badge">AI tips</span> : null}
+              {peer?.name ? t('messages.matched') : t('messages.matchNumber', { id: matchId })}
+              {llmConfigured ? <span className="chat-ai-badge">{t('messages.aiTipsBadge')}</span> : null}
             </p>
           </div>
           <div className="chat-header-actions" ref={menuWrapRef}>
@@ -263,10 +384,10 @@ export default function MessagesPage() {
             {menuOpen ? (
               <div className="chat-menu" role="menu">
                 <button type="button" className="chat-menu-item" role="menuitem" onClick={unmatch}>
-                  Unmatch
+                  {t('messages.menuUnmatch')}
                 </button>
                 <button type="button" className="chat-menu-item danger" role="menuitem" onClick={blockPeer}>
-                  Block
+                  {t('messages.menuBlock')}
                 </button>
               </div>
             ) : null}
@@ -281,7 +402,7 @@ export default function MessagesPage() {
                 className={`message-item ${msg.isAssistant ? 'assistant' : msg.isFromCurrentUser ? 'own' : 'other'}`}
               >
                 {msg.isAssistant ? (
-                  <span className="chat-assistant-label">YouMe coach</span>
+                  <span className="chat-assistant-label">{t('messages.assistantLabel')}</span>
                 ) : null}
                 {msg.body}
               </div>
@@ -293,7 +414,7 @@ export default function MessagesPage() {
               padding: '20px',
               fontSize: '14px'
             }}>
-              👋 Say hi — a short YouMe coach note may appear when you match (and loads in real time).
+              {t('messages.emptyThread')}
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -306,69 +427,72 @@ export default function MessagesPage() {
             onClick={fetchReplyIdeas}
             disabled={replyLoading}
           >
-            {replyLoading ? 'Getting ideas…' : 'AI reply ideas'}
+            {replyLoading ? t('messages.gettingIdeas') : t('messages.aiReplyIdeas')}
           </button>
           <span className="chat-ai-hint">
-            {llmConfigured ? 'Powered by your configured model.' : 'Templates when no API key is set.'}
+            {llmConfigured && aiQuota && (aiQuota.dailyLimit > 0 || aiQuota.fairUseCap)
+              ? `${t('messages.aiQuotaBadge', { remaining: aiQuota.remaining })}${
+                aiQuota.fairUseCap ? ` ${t('messages.aiFairUseNote')}` : ''
+              } · `
+              : ''}
+            {llmConfigured ? t('messages.aiPowered') : t('messages.aiTemplates')}
           </span>
         </div>
-        {replyIdeas.length > 0 ? (
-          <div className="chat-ai-chips" role="list">
-            {replyIdeas.map((idea, i) => (
-              <button
-                type="button"
-                key={`${i}-${idea.slice(0, 12)}`}
-                className="chat-ai-chip"
-                onClick={() => setBody(idea)}
-              >
-                {idea}
-              </button>
-            ))}
+
+        {showSuggestionRail ? (
+          <div
+            className={`chat-ai-suggestions-wrap${ideasExiting ? ' chat-ai-suggestions-wrap--exiting' : ''}`}
+            aria-live="polite"
+          >
+            <p className="chat-ai-suggestions-heading">{t('messages.suggestionsHeading')}</p>
+            <div className="chat-ai-suggestions-scroller chat-ai-suggestions-pop" key={suggestionsBatchKey}>
+              <div className="chat-ai-suggestions-track" role="list">
+                {replyIdeas.map((idea) => (
+                  <button
+                    type="button"
+                    key={idea.id}
+                    className="chat-ai-suggestion-card"
+                    role="listitem"
+                    onClick={() => pickSuggestion(idea.text)}
+                    aria-label={`${suggestionLabel(idea.type)}: ${idea.text}`}
+                  >
+                    <span className="chat-ai-suggestion-label">
+                      <span className="chat-ai-suggestion-icon" aria-hidden>
+                        {SUGGESTION_ICONS[idea.type] ?? SUGGESTION_ICONS.suggestion}
+                      </span>
+                      <span className="chat-ai-suggestion-type">{suggestionLabel(idea.type)}</span>
+                    </span>
+                    <span className="chat-ai-suggestion-text">{idea.text}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         ) : null}
 
-        <div style={{
-          display: 'flex',
-          gap: '8px',
-          marginTop: '16px',
-          alignItems: 'flex-end'
-        }}>
+        <div className="chat-composer-row">
           <textarea
             value={body}
             onChange={e => setBody(e.target.value)}
             onKeyDown={handleKeyPress}
-            placeholder="Type a message..."
-            className="form-input"
-            style={{
-              margin: 0,
-              flex: 1,
-              minHeight: '44px',
-              maxHeight: '100px',
-              resize: 'none'
-            }}
+            placeholder={t('messages.composerPlaceholder')}
+            className="form-input chat-composer-input"
             disabled={sending}
             rows={1}
           />
           <button
+            type="button"
             onClick={sendMessage}
-            className="btn btn-primary"
+            className="btn btn-primary chat-composer-send"
             disabled={!body.trim() || sending}
-            style={{
-              padding: '12px 16px',
-              minWidth: '60px'
-            }}
+            aria-label={t('messages.send')}
           >
-            {sending ? '...' : '📤'}
+            {sending ? t('messages.sending') : '📤'}
           </button>
         </div>
 
         {error && (
-          <div style={{
-            color: '#e17055',
-            fontSize: '14px',
-            marginTop: '8px',
-            textAlign: 'center'
-          }}>
+          <div className="chat-inline-error">
             {error}
           </div>
         )}

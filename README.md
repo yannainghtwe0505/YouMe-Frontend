@@ -18,12 +18,12 @@ Single-page application for **YouMe**: login/register, discovery feed, likes, ma
 ```bash
 cd frontend
 npm install
-npm run dev -- --port 5179
+npm run dev
 ```
 
-Open the URL Vite prints (e.g. `http://localhost:5179`).
+Open the URL Vite prints (port **5179**; dev server binds all interfaces via `vite.config.js`).
 
-The API base URL is set in **`src/api.js`** (`baseURL: 'http://localhost:8090'`). Change it if your backend runs elsewhere. Ensure **CORS** on the server allows your dev origin (see `../backend` → `WebConfig.java`).
+**API / SPA URLs:** `.env.development` → `VITE_API_URL`, `VITE_PUBLIC_APP_URL`. Central reader: `src/config/urls.js`. See [../docs/ENVIRONMENT_URLS.md](../docs/ENVIRONMENT_URLS.md). Backend CORS is driven by `app.urls.cors-allowed-origin-patterns`.
 
 ---
 
@@ -31,6 +31,7 @@ The API base URL is set in **`src/api.js`** (`baseURL: 'http://localhost:8090'`)
 
 ```bash
 npm run build
+npm run build:staging   # uses .env.staging
 ```
 
 Output: **`dist/`** — static files you can host on any CDN, object storage, or reverse proxy (e.g. Nginx) in front of the API.
@@ -65,7 +66,7 @@ src/
 
 ## Environment / configuration
 
-There is no `.env` file in the template: **edit `src/api.js`** for `baseURL`, or introduce `import.meta.env.VITE_API_URL` if you want Vite env-based config for multiple deployments.
+Use **`.env.development`**, **`.env.staging`**, and **`.env.production`** (see [../docs/ENVIRONMENT_URLS.md](../docs/ENVIRONMENT_URLS.md)). `src/config/urls.js` exposes `API_BASE_URL`, `WS_URL`, and `APP_PUBLIC_URL` to the app.
 
 ---
 

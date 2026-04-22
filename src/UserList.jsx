@@ -1,8 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from './api';
 import DiscoverSettingsPanel from './DiscoverSettingsPanel';
-import { mergeDiscoveryFromApi, mergeLifestyleFromApi } from './discoveryDefaults';
+import {
+  labelForSelectOption,
+  mergeDiscoveryFromApi,
+  mergeLifestyleFromApi,
+} from './discoveryDefaults';
 
 const placeholderAvatar = 'https://randomuser.me/api/portraits/lego/1.jpg';
 
@@ -17,11 +22,11 @@ function galleryUrls(user, placeholder) {
   return one ? [one] : [placeholder];
 }
 
-function distanceBadgeLabel(user) {
-  if (user?.distanceFromYouKm != null) return `📍 ${user.distanceFromYouKm} km away`;
+function distanceBadgeLabel(user, t) {
+  if (user?.distanceFromYouKm != null) return `📍 ${t('discover.kmAway', { km: user.distanceFromYouKm })}`;
   const loc = user?.city || user?.location;
-  if (loc) return `📍 ${loc}`;
-  return '💙 Open to chat';
+  if (loc) return `📍 ${t('discover.locationPin', { place: loc })}`;
+  return `💙 ${t('discover.openToChat')}`;
 }
 
 function IconSliders({ size = 22 }) {
@@ -46,6 +51,7 @@ function IconSliders({ size = 22 }) {
 }
 
 function DiscoverCardPhotos({ user, placeholder }) {
+  const { t } = useTranslation();
   const uid = cardUserId(user);
   const gallery = useMemo(() => galleryUrls(user, placeholder), [user, placeholder]);
   const [idx, setIdx] = useState(0);
@@ -84,9 +90,9 @@ function DiscoverCardPhotos({ user, placeholder }) {
       />
       {n > 1 ? (
         <>
-          <button type="button" className="youme-photo-tap youme-photo-tap--prev" onClick={prev} aria-label="Previous photo" />
-          <button type="button" className="youme-photo-tap youme-photo-tap--next" onClick={next} aria-label="Next photo" />
-          <div className="youme-photo-dots" aria-label="Photos">
+          <button type="button" className="youme-photo-tap youme-photo-tap--prev" onClick={prev} aria-label={t('discover.prevPhoto')} />
+          <button type="button" className="youme-photo-tap youme-photo-tap--next" onClick={next} aria-label={t('discover.nextPhoto')} />
+          <div className="youme-photo-dots" aria-label={t('discover.photosAria')}>
             {gallery.map((_, i) => (
               <button
                 key={i}
@@ -165,6 +171,13 @@ function DetailRow({ icon, label, value }) {
   );
 }
 
+function formatGenderValue(g, t) {
+  const s = g != null ? String(g).trim() : '';
+  if (s === 'MALE') return t('profile.genderMale');
+  if (s === 'FEMALE') return t('profile.genderFemale');
+  return s;
+}
+
 function ProfileDetailOverlay({
   user,
   open,
@@ -175,6 +188,7 @@ function ProfileDetailOverlay({
   animating,
   placeholderAvatar: ph,
 }) {
+  const { t } = useTranslation();
   const uid = user ? cardUserId(user) : null;
   const gallery = useMemo(
     () => (user ? galleryUrls(user, ph) : [ph]),
@@ -193,21 +207,21 @@ function ProfileDetailOverlay({
 
   if (!open || !user) return null;
 
-  const name = user.name || user.displayName || 'Member';
+  const name = user.name || user.displayName || t('feed.detail.member');
   const age = user.age != null ? user.age : null;
   const interests = normalizeInterests(user.interests);
   const n = gallery.length;
 
   const lookingParts = [];
   if (user.minAge != null && user.maxAge != null) {
-    lookingParts.push(`Ages ${user.minAge}–${user.maxAge}`);
+    lookingParts.push(t('feed.detail.looking.ageRange', { min: user.minAge, max: user.maxAge }));
   } else if (user.minAge != null) {
-    lookingParts.push(`From age ${user.minAge}`);
+    lookingParts.push(t('feed.detail.looking.fromAge', { min: user.minAge }));
   } else if (user.maxAge != null) {
-    lookingParts.push(`Up to age ${user.maxAge}`);
+    lookingParts.push(t('feed.detail.looking.upToAge', { max: user.maxAge }));
   }
   if (user.distanceKm != null) {
-    lookingParts.push(`Within ~${user.distanceKm} km`);
+    lookingParts.push(t('feed.detail.looking.withinKm', { km: user.distanceKm }));
   }
 
   const hasEssentials =
@@ -224,9 +238,9 @@ function ProfileDetailOverlay({
 
   const distanceDetailValue =
     user.distanceFromYouKm != null
-      ? `About ${user.distanceFromYouKm} km from you`
+      ? t('feed.detail.distanceFromYou', { km: user.distanceFromYouKm })
       : user.distanceKm != null
-        ? `${user.distanceKm} km`
+        ? t('feed.detail.distanceKmOnly', { km: user.distanceKm })
         : null;
 
   const heroPrev = (e) => {
@@ -267,21 +281,21 @@ function ProfileDetailOverlay({
                 type="button"
                 className="youme-photo-tap youme-photo-tap--prev"
                 onClick={heroPrev}
-                aria-label="Previous photo"
+                aria-label={t('discover.prevPhoto')}
               />
               <button
                 type="button"
                 className="youme-photo-tap youme-photo-tap--next"
                 onClick={heroNext}
-                aria-label="Next photo"
+                aria-label={t('discover.nextPhoto')}
               />
-              <div className="youme-photo-dots" aria-label="Photos">
+              <div className="youme-photo-dots" aria-label={t('discover.photosAria')}>
                 {gallery.map((_, i) => (
                   <button
                     key={i}
                     type="button"
                     className={`youme-photo-dot${i === heroIdx ? ' active' : ''}`}
-                    aria-label={`Photo ${i + 1}`}
+                    aria-label={t('feed.detail.photoNumber', { n: i + 1 })}
                     aria-current={i === heroIdx ? 'true' : undefined}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -305,7 +319,7 @@ function ProfileDetailOverlay({
             type="button"
             className="discover-detail-close"
             onClick={onClose}
-            aria-label="Close profile details"
+            aria-label={t('feed.detail.closeProfile')}
           >
             <IconChevronDown />
           </button>
@@ -315,7 +329,7 @@ function ProfileDetailOverlay({
           <section className="discover-detail-card">
             <h3 className="discover-detail-section-title">
               <span className="discover-detail-section-emoji" aria-hidden>🔎</span>
-              Looking for
+              {t('discover.settings.filter.lookingFor')}
             </h3>
             <p className="discover-detail-pill-text">{lookingParts.join(' · ')}</p>
           </section>
@@ -325,7 +339,7 @@ function ProfileDetailOverlay({
           <section className="discover-detail-card">
             <h3 className="discover-detail-section-title">
               <span className="discover-detail-section-emoji" aria-hidden>❝</span>
-              About me
+              {t('feed.detail.section.about')}
             </h3>
             <p className="discover-detail-bio">{user.bio}</p>
           </section>
@@ -335,18 +349,18 @@ function ProfileDetailOverlay({
           <section className="discover-detail-card">
             <h3 className="discover-detail-section-title">
               <span className="discover-detail-section-emoji" aria-hidden>📋</span>
-              Essentials
+              {t('feed.detail.section.essentials')}
             </h3>
             <div className="discover-detail-rows">
-              <DetailRow icon="🎂" label="Age" value={age != null ? `${age}` : null} />
-              <DetailRow icon="⚧" label="Gender" value={user.gender} />
-              <DetailRow icon="📍" label="Location" value={user.city || user.location} />
-              <DetailRow icon="🎓" label="Education" value={user.education} />
-              <DetailRow icon="💼" label="Work" value={user.occupation} />
-              <DetailRow icon="✨" label="Hobbies" value={user.hobbies} />
-              <DetailRow icon="📏" label="Distance" value={distanceDetailValue} />
+              <DetailRow icon="🎂" label={t('profile.age')} value={age != null ? `${age}` : null} />
+              <DetailRow icon="⚧" label={t('profile.gender')} value={formatGenderValue(user.gender, t)} />
+              <DetailRow icon="📍" label={t('profile.location')} value={user.city || user.location} />
+              <DetailRow icon="🎓" label={t('profile.education')} value={user.education} />
+              <DetailRow icon="💼" label={t('profile.work')} value={user.occupation} />
+              <DetailRow icon="✨" label={t('profile.hobby')} value={user.hobbies} />
+              <DetailRow icon="📏" label={t('feed.detail.row.distance')} value={distanceDetailValue} />
               {user.isPremium ? (
-                <DetailRow icon="⭐" label="Member" value="Premium" />
+                <DetailRow icon="⭐" label={t('feed.detail.row.member')} value={t('feed.detail.premium')} />
               ) : null}
             </div>
           </section>
@@ -356,7 +370,7 @@ function ProfileDetailOverlay({
           <section className="discover-detail-card">
             <h3 className="discover-detail-section-title">
               <span className="discover-detail-section-emoji" aria-hidden>💜</span>
-              Interests
+              {t('profile.interests')}
             </h3>
             <div className="discover-detail-chips">
               {interests.map((tag, i) => (
@@ -372,17 +386,17 @@ function ProfileDetailOverlay({
           const life = user.lifestyle && typeof user.lifestyle === 'object' ? user.lifestyle : null;
           if (!life) return null;
           const labels = {
-            lookingFor: 'Looking for',
-            zodiac: 'Zodiac',
-            education: 'Education',
-            familyPlans: 'Family plans',
-            communicationStyle: 'Communication',
-            loveStyle: 'Love style',
-            pets: 'Pets',
-            drinking: 'Drinking',
-            smoking: 'Smoking',
-            workout: 'Workout',
-            socialMedia: 'Social media',
+            lookingFor: t('discover.settings.filter.lookingFor'),
+            zodiac: t('discover.settings.filter.zodiac'),
+            education: t('discover.settings.filter.education'),
+            familyPlans: t('discover.settings.filter.familyPlans'),
+            communicationStyle: t('discover.settings.filter.communicationStyle'),
+            loveStyle: t('discover.settings.filter.loveStyle'),
+            pets: t('discover.settings.filter.pets'),
+            drinking: t('discover.settings.filter.drinking'),
+            smoking: t('discover.settings.filter.smoking'),
+            workout: t('discover.settings.filter.workout'),
+            socialMedia: t('discover.settings.filter.socialMedia'),
           };
           const langs = Array.isArray(life.languages) ? life.languages.filter(Boolean).join(', ') : '';
           const rows = Object.keys(labels)
@@ -393,13 +407,18 @@ function ProfileDetailOverlay({
             <section className="discover-detail-card">
               <h3 className="discover-detail-section-title">
                 <span className="discover-detail-section-emoji" aria-hidden>✨</span>
-                Lifestyle
+                {t('feed.detail.section.lifestyle')}
               </h3>
               <div className="discover-detail-rows">
                 {rows.map(({ k, v }) => (
-                  <DetailRow key={k} icon="•" label={labels[k]} value={String(v)} />
+                  <DetailRow
+                    key={k}
+                    icon="•"
+                    label={labels[k]}
+                    value={labelForSelectOption(k, String(v), t)}
+                  />
                 ))}
-                {langs ? <DetailRow icon="🌐" label="Languages" value={langs} /> : null}
+                {langs ? <DetailRow icon="🌐" label={t('feed.detail.row.languages')} value={langs} /> : null}
               </div>
             </section>
           );
@@ -407,7 +426,7 @@ function ProfileDetailOverlay({
 
         {lookingParts.length === 0 && (user.bio || '').trim() === '' && !hasEssentials && interests.length === 0 && (
           <section className="discover-detail-card discover-detail-card-muted">
-            <p className="discover-detail-muted-text">They haven&apos;t added much yet — start a chat after you match to learn more.</p>
+            <p className="discover-detail-muted-text">{t('feed.detail.sparseProfile')}</p>
           </section>
         )}
       </div>
@@ -419,7 +438,7 @@ function ProfileDetailOverlay({
             onClick={onDislike}
             className="youme-action dislike"
             disabled={animating}
-            title="Pass"
+            title={t('feed.action.pass')}
           >
             ✕
           </button>
@@ -428,7 +447,7 @@ function ProfileDetailOverlay({
             onClick={onSuper}
             className="youme-action super"
             disabled={animating}
-            title="Super Like"
+            title={t('feed.action.superLike')}
           >
             ★
           </button>
@@ -437,7 +456,7 @@ function ProfileDetailOverlay({
             onClick={onLike}
             className="youme-action like"
             disabled={animating}
-            title="Like"
+            title={t('feed.action.like')}
           >
             ♥
           </button>
@@ -449,6 +468,7 @@ function ProfileDetailOverlay({
 }
 
 export default function UserList() {
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -461,6 +481,7 @@ export default function UserList() {
   const [activeRadiusKm, setActiveRadiusKm] = useState(null);
   const [viewerHasCoords, setViewerHasCoords] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsHydrating, setSettingsHydrating] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsError, setSettingsError] = useState(null);
   const [limitEnabled, setLimitEnabled] = useState(false);
@@ -498,16 +519,18 @@ export default function UserList() {
         );
       })
       .catch((err) => {
-        setError(err.response?.data?.error || err.message || 'Request failed');
+        setError(err.response?.data?.error || err.message || t('feed.errorGeneric'));
         setLoading(false);
       });
-  }, []);
+  }, [t]);
 
   const openDiscoverySettings = useCallback(() => {
     setSettingsOpen(true);
+    setSettingsHydrating(true);
     setSettingsError(null);
     setGeoHint(null);
-    api.get('/me')
+    api
+      .get('/me')
       .then((res) => {
         const data = res.data;
         const km = data?.distanceKm;
@@ -527,9 +550,12 @@ export default function UserList() {
         if (typeof b === 'number' && Number.isFinite(b)) setMaxAge(Math.max(18, Math.min(80, b)));
       })
       .catch(() => {
-        setSettingsError('Could not load your settings.');
+        setSettingsError(t('discover.settings.errorLoad'));
+      })
+      .finally(() => {
+        setSettingsHydrating(false);
       });
-  }, []);
+  }, [t]);
 
   const saveDiscoverySettings = useCallback(async () => {
     setSettingsSaving(true);
@@ -548,15 +574,15 @@ export default function UserList() {
       setSettingsOpen(false);
       await loadFeed();
     } catch (err) {
-      setSettingsError(err.response?.data?.error || err.message || 'Could not save');
+      setSettingsError(err.response?.data?.error || err.message || t('discover.settings.errorSave'));
     } finally {
       setSettingsSaving(false);
     }
-  }, [limitEnabled, maxKm, minAge, maxAge, discoverySettings, lifestyle, loadFeed]);
+  }, [limitEnabled, maxKm, minAge, maxAge, discoverySettings, lifestyle, loadFeed, t]);
 
   const useDiscoveryLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      setGeoHint('Location is not supported in this browser.');
+      setGeoHint(t('discover.settings.geoNotSupported'));
       return;
     }
     setLocLoading(true);
@@ -570,18 +596,18 @@ export default function UserList() {
           });
           setSettingsHasCoords(true);
         } catch (err) {
-          setGeoHint(err.response?.data?.error || err.message || 'Could not save location');
+          setGeoHint(err.response?.data?.error || err.message || t('discover.settings.geoSaveFailed'));
         } finally {
           setLocLoading(false);
         }
       },
       () => {
-        setGeoHint('Could not read your location. Check browser permissions.');
+        setGeoHint(t('discover.settings.geoPermission'));
         setLocLoading(false);
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60_000 },
     );
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadFeed();
@@ -627,7 +653,7 @@ export default function UserList() {
         const res = await api.post(`/likes/${uid}`);
         if (res.data?.matched) {
           setMatchModal({
-            name: users[current].name || users[current].displayName || 'Someone',
+            name: users[current].name || users[current].displayName || t('feed.match.someone'),
             matchId: res.data.matchId,
           });
         }
@@ -635,7 +661,7 @@ export default function UserList() {
         const res = await api.post(`/superlikes/${uid}`);
         if (res.data?.matched) {
           setMatchModal({
-            name: users[current].name || users[current].displayName || 'Someone',
+            name: users[current].name || users[current].displayName || t('feed.match.someone'),
             matchId: res.data.matchId,
           });
         }
@@ -659,7 +685,7 @@ export default function UserList() {
   if (loading) {
     return (
       <div className="loading fade-in" style={{ minHeight: '400px' }}>
-        <div className="pulse" style={{ fontSize: '1.2rem' }}>Finding people near you…</div>
+        <div className="pulse" style={{ fontSize: '1.2rem' }}>{t('feed.loading')}</div>
       </div>
     );
   }
@@ -669,9 +695,9 @@ export default function UserList() {
       <div className="fade-in">
         <div className="card card-surface discover-error">
           <div className="discover-error-icon" aria-hidden>❌</div>
-          <h2>Unable to load discover</h2>
+          <h2>{t('feed.errorTitle')}</h2>
           <p>{error}</p>
-          <button type="button" className="btn btn-primary" onClick={loadFeed}>Try again</button>
+          <button type="button" className="btn btn-primary" onClick={loadFeed}>{t('feed.tryAgain')}</button>
         </div>
       </div>
     );
@@ -685,6 +711,7 @@ export default function UserList() {
         <DiscoverSettingsPanel
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}
+          hydrating={settingsHydrating}
           discoverySettings={discoverySettings}
           setDiscoverySettings={setDiscoverySettings}
           lifestyle={lifestyle}
@@ -707,24 +734,23 @@ export default function UserList() {
         />
         <div className="empty discover-empty">
           <div className="discover-empty-icon" aria-hidden>✨</div>
-          <h2>You&apos;re all caught up</h2>
+          <h2>{t('feed.empty.caughtUp')}</h2>
           {discoveryLimited ? (
             <p>
-              Strong discovery filters (distance, age, modes, or deal-breakers) may be hiding everyone. Loosen
-              filters in
+              {t('feed.empty.limitedBefore')}
               {' '}
-              <strong>Discovery settings</strong>
+              <strong>{t('discover.settings.title')}</strong>
               {' '}
-              and refresh.
+              {t('feed.empty.limitedAfter')}
             </p>
           ) : (
-            <p>Passes and likes clear from this list. Check back later or refresh.</p>
+            <p>{t('feed.empty.default')}</p>
           )}
           <div className="discover-empty-actions">
             <button type="button" className="btn btn-secondary" onClick={openDiscoverySettings}>
-              Discovery settings
+              {t('discover.settings.title')}
             </button>
-            <button type="button" className="btn btn-primary" onClick={loadFeed}>Refresh deck</button>
+            <button type="button" className="btn btn-primary" onClick={loadFeed}>{t('feed.empty.refreshDeck')}</button>
           </div>
         </div>
       </div>
@@ -740,6 +766,7 @@ export default function UserList() {
       <DiscoverSettingsPanel
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        hydrating={settingsHydrating}
         discoverySettings={discoverySettings}
         setDiscoverySettings={setDiscoverySettings}
         lifestyle={lifestyle}
@@ -774,20 +801,20 @@ export default function UserList() {
       {matchModal && (
         <div className="match-overlay" role="dialog" aria-modal="true" aria-labelledby="match-title">
           <div className="match-overlay-card">
-            <h2 id="match-title">It&apos;s a match!</h2>
-            <p>You and <strong>{matchModal.name}</strong> liked each other.</p>
+            <h2 id="match-title">{t('feed.match.title')}</h2>
+            <p>{t('feed.match.body', { name: matchModal.name })}</p>
             <div className="match-overlay-actions">
               {matchModal.matchId ? (
                 <Link to={`/messages/${matchModal.matchId}`} className="btn btn-primary" onClick={() => setMatchModal(null)}>
-                  Send a message
+                  {t('feed.match.sendMessage')}
                 </Link>
               ) : (
                 <Link to="/messages" className="btn btn-primary" onClick={() => setMatchModal(null)}>
-                  Go to messages
+                  {t('feed.match.goMessages')}
                 </Link>
               )}
               <button type="button" className="btn btn-ghost" onClick={() => setMatchModal(null)}>
-                Keep swiping
+                {t('feed.match.keepSwiping')}
               </button>
             </div>
           </div>
@@ -800,30 +827,20 @@ export default function UserList() {
             type="button"
             className="discover-settings-trigger"
             onClick={openDiscoverySettings}
-            aria-label="Discovery settings"
-            title="Discovery settings"
+            aria-label={t('discover.settings.title')}
+            title={t('discover.settings.title')}
           >
             <IconSliders />
           </button>
           <div className="discover-header-main">
-            <h1>Discover</h1>
-            <p>Swipe-style matching — pass, like, or super like</p>
+            <h1>{t('nav.discover')}</h1>
+            <p>{t('feed.header.subtitle')}</p>
             {discoveryLimited && activeRadiusKm != null ? (
               <p className={`discover-filter-chip${viewerHasCoords ? '' : ' discover-filter-chip-warn'}`}>
                 {viewerHasCoords ? (
-                  <>
-                    Within ~
-                    {activeRadiusKm}
-                    {' '}
-                    km — adjust with the filter button
-                  </>
+                  t('feed.header.radiusWithLocation', { km: activeRadiusKm })
                 ) : (
-                  <>
-                    ~
-                    {activeRadiusKm}
-                    {' '}
-                    km selected — add your location in Discovery settings for this to apply
-                  </>
+                  t('feed.header.radiusNoLocation', { km: activeRadiusKm })
                 )}
               </p>
             ) : null}
@@ -844,13 +861,13 @@ export default function UserList() {
           >
             <div className="youme-card-image">
               <DiscoverCardPhotos user={nextUser} placeholder={placeholderAvatar} />
-              <div className="youme-badge">{distanceBadgeLabel(nextUser)}</div>
+              <div className="youme-badge">{distanceBadgeLabel(nextUser, t)}</div>
             </div>
           <div className="youme-meta">
             <div className="youme-meta-top">
               <div className="youme-identity">
                 <h2 className="youme-name-age">
-                  <span className="youme-display-name">{nextUser.name || nextUser.displayName || 'Member'}</span>
+                  <span className="youme-display-name">{nextUser.name || nextUser.displayName || t('feed.detail.member')}</span>
                   {nextUser.age != null ? (
                     <span className="youme-display-age">{nextUser.age}</span>
                   ) : null}
@@ -858,7 +875,7 @@ export default function UserList() {
               </div>
             </div>
             <div className="youme-info">
-              <p>{nextUser.bio || 'Say hi and see where it goes.'}</p>
+              <p>{nextUser.bio || t('feed.card.teaserNext')}</p>
             </div>
           </div>
           </div>
@@ -867,14 +884,14 @@ export default function UserList() {
         <div className={`youme-card ${animating ? `animating ${swipeClass}` : ''}`}>
           <div className="youme-card-image">
             <DiscoverCardPhotos user={user} placeholder={placeholderAvatar} />
-            <div className="youme-badge">{distanceBadgeLabel(user)}</div>
+            <div className="youme-badge">{distanceBadgeLabel(user, t)}</div>
           </div>
 
           <div className="youme-meta">
             <div className="youme-meta-top">
               <div className="youme-identity">
                 <h2 className="youme-name-age">
-                  <span className="youme-display-name">{user.name || user.displayName || 'Member'}</span>
+                  <span className="youme-display-name">{user.name || user.displayName || t('feed.detail.member')}</span>
                   {user.age != null ? (
                     <span className="youme-display-age">{user.age}</span>
                   ) : null}
@@ -884,14 +901,14 @@ export default function UserList() {
                 type="button"
                 className="discover-expand-btn"
                 onClick={() => setDetailOpen(true)}
-                aria-label="View full profile"
-                title="View full profile"
+                aria-label={t('feed.viewFullProfile')}
+                title={t('feed.viewFullProfile')}
               >
                 <IconChevronUp />
               </button>
             </div>
             <div className="youme-info">
-              <p>{user.bio || 'Excited to meet people and create great stories.'}</p>
+              <p>{user.bio || t('feed.card.teaserCurrent')}</p>
             </div>
           </div>
         </div>
@@ -903,7 +920,7 @@ export default function UserList() {
           onClick={() => handleAction('dislike')}
           className="youme-action dislike"
           disabled={animating}
-          title="Pass"
+          title={t('feed.action.pass')}
         >
           ✕
         </button>
@@ -913,7 +930,7 @@ export default function UserList() {
           onClick={() => handleAction('super')}
           className="youme-action super"
           disabled={animating}
-          title="Super Like"
+          title={t('feed.action.superLike')}
         >
           ★
         </button>
@@ -923,7 +940,7 @@ export default function UserList() {
           onClick={() => handleAction('like')}
           className="youme-action like"
           disabled={animating}
-          title="Like"
+          title={t('feed.action.like')}
         >
           ♥
         </button>
