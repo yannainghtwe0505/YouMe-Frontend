@@ -61,7 +61,8 @@ jobs:
           if [ -n "$EC2_SSH_KNOWN_HOSTS" ]; then
             echo "$EC2_SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
           fi
-
+      - name: Debug IP
+        run: echo "${{ secrets.EC2_IP }}"
       - name: Deploy on EC2
         env:
           EC2_USER_IN: ${{ secrets.EC2_USER }}
