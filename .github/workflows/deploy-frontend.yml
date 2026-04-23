@@ -22,6 +22,7 @@ env:
 jobs:
   deploy-frontend:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,6 +45,7 @@ jobs:
           BUILD_ARGS=(--build-arg "VITE_API_URL=/api")
           [ -n "$PUBLIC_APP_URL" ] && BUILD_ARGS+=(--build-arg "VITE_PUBLIC_APP_URL=$PUBLIC_APP_URL")
           [ -n "$WS_URL" ] && BUILD_ARGS+=(--build-arg "VITE_WS_URL=$WS_URL")
+
           docker build "${BUILD_ARGS[@]}" -f Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
         shell: bash
@@ -55,6 +57,7 @@ jobs:
           mkdir -p ~/.ssh
           umask 077
           echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
+
           if [ -n "$EC2_SSH_KNOWN_HOSTS" ]; then
             echo "$EC2_SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
           fi
@@ -65,8 +68,41 @@ jobs:
           EC2_DEPLOY_IN: ${{ secrets.EC2_DEPLOY_DIR }}
         run: |
           set -e
+
           EC2_USER="${EC2_USER_IN:-ec2-user}"
           DEPLOY_DIR="${EC2_DEPLOY_IN:-/home/${EC2_USER}/dating-app}"
-          REMOTE="cd $DEPLOY_DIR && docker pull $IMAGE && (docker compose -f docker-compose.prod.yml up -d --no-build frontend || docker-compose -f docker-compose.prod.yml up -d --no-build frontend)"
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "${EC2_USER}@${{ secrets.EC2_IP }}" "$REMOTE"
+          REPO_URL="https://github.com/${{ github.repository }}.git"
+
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "${EC2_USER}@${{ secrets.EC2_IP }}" << EOF
+            set -e
+
+            echo "🚀 Deploying to EC2..."
+
+            # 1. Install git if missing (safe guard)
+            if ! command -v git >/dev/null 2>&1; then
+              sudo yum install -y git
+            fi
+
+            # 2. Clone repo if not exists
+            if [ ! -d "$DEPLOY_DIR" ]; then
+              echo "📦 Cloning repo..."
+              git clone "$REPO_URL" "$DEPLOY_DIR"
+            fi
+
+            cd "$DEPLOY_DIR"
+
+            # 3. Pull latest code
+            echo "🔄 Pulling latest code..."
+            git pull origin main
+
+            # 4. Pull latest Docker image
+            echo "🐳 Pulling latest Docker image..."
+            docker pull $IMAGE
+
+            # 5. Run container (modern docker compose)
+            echo "🚀 Starting container..."
+            docker compose -f docker-compose.prod.yml up -d --no-build frontend
+
+            echo "✅ Deployment completed!"
+          EOF
         shell: bash
