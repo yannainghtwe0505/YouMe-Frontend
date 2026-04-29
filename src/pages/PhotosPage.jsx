@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
+import { PRESIGN_API_URL } from '../config/urls.js';
 
 const MAX_PHOTOS = 6;
 
@@ -83,10 +84,32 @@ export default function PhotosPage() {
     const contentType = file.type && file.type.startsWith('image/') ? file.type : 'image/jpeg';
 
     try {
-      const presign = await api.post(
-        `/photos/presign?filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`,
-      );
-      const { uploadUrl, s3Key } = presign.data;
+      let uploadUrl;
+      let s3Key;
+      if (PRESIGN_API_URL) {
+        const token = localStorage.getItem('token');
+        const presignRes = await fetch(`${PRESIGN_API_URL}/presign`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ filename, contentType }),
+        });
+        const data = await presignRes.json().catch(() => ({}));
+        if (!presignRes.ok) {
+          const msg = typeof data.error === 'string' ? data.error : presignRes.statusText;
+          throw new Error(msg || 'Presign failed');
+        }
+        uploadUrl = data.uploadUrl;
+        s3Key = data.s3Key;
+      } else {
+        const presign = await api.post(
+          `/photos/presign?filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`,
+        );
+        uploadUrl = presign.data.uploadUrl;
+        s3Key = presign.data.s3Key;
+      }
       if (!uploadUrl || !s3Key) {
         setError(t('photos.errorInvalidResponse'));
         return;

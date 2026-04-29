@@ -26,3 +26,18 @@ export const WS_URL = (import.meta.env.VITE_WS_URL && String(import.meta.env.VIT
 
 /** Optional public origin of this SPA (Stripe redirects, sharing). No trailing slash. */
 export const APP_PUBLIC_URL = (import.meta.env.VITE_PUBLIC_APP_URL && String(import.meta.env.VITE_PUBLIC_APP_URL).replace(/\/$/, '')) || '';
+
+/**
+ * Optional API Gateway base URL for serverless S3 presign (Lambda). No trailing slash.
+ * When set, photo uploads call POST {PRESIGN_API_URL}/presign instead of Spring /photos/presign.
+ * Deploy the presign stack from the dedicated serverless repository; JWT must match the API secret.
+ */
+function resolvePresignApiUrl() {
+  const raw = import.meta.env.VITE_PRESIGN_API_URL;
+  if (raw == null || String(raw).trim() === '') {
+    return '';
+  }
+  return String(raw).trim().replace(/\/$/, '');
+}
+
+export const PRESIGN_API_URL = resolvePresignApiUrl();
