@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import api from '../api';
 import YouMeLogo from '../components/YouMeLogo';
 import AuthShell from '../components/auth/AuthShell';
+import Icon from '../components/ui/Icon';
+import { useLoginAmbientAudio } from '../hooks/useLoginAmbientAudio';
 
 export default function LoginPage({ onLogin }) {
   const { t } = useTranslation();
@@ -13,9 +15,11 @@ export default function LoginPage({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { bindGesture } = useLoginAmbientAudio();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    bindGesture();
     setError(null);
     setLoading(true);
 
@@ -55,19 +59,27 @@ export default function LoginPage({ onLogin }) {
 
   return (
     <AuthShell
+      variant="login"
       hero={(
         <>
           <YouMeLogo size={80} className="auth-hero-logo" />
-          <h1 className="auth-hero__title">{t('auth.loginTitle')}</h1>
-          <p className="auth-hero__subtitle">{t('auth.loginSubtitle')}</p>
+          <h1 className="auth-hero__title text-title">{t('auth.loginTitle')}</h1>
+          <p className="auth-hero__subtitle text-body">{t('auth.loginSubtitle')}</p>
         </>
       )}
     >
-      <div className="glass-card auth-card-stagger">
+      <div
+        className="glass-card auth-card-stagger"
+        onPointerDown={bindGesture}
+        onKeyDown={bindGesture}
+        role="presentation"
+      >
+        <p className="login-audio-hint">{t('auth.ambientHint', { defaultValue: 'Ambient sound may play softly after interaction' })}</p>
+
         <form onSubmit={handleLogin}>
           <div className="auth-field">
-            <label className="auth-field__label" htmlFor="login-id">
-              <span aria-hidden>📧</span>
+            <label className="auth-field__label text-label" htmlFor="login-id">
+              <Icon name="mail" size="sm" />
               {t('auth.emailOrPhoneLabel')}
             </label>
             <input
@@ -76,18 +88,19 @@ export default function LoginPage({ onLogin }) {
               inputMode="text"
               value={loginId}
               onChange={(e) => setLoginId(e.target.value)}
+              onFocus={bindGesture}
               placeholder={t('auth.emailOrPhonePlaceholder')}
               autoComplete="username"
               required
               className="form-input"
               disabled={loading}
             />
-            <p className="auth-field__hint">{t('auth.emailOrPhoneHint')}</p>
+            <p className="auth-field__hint text-caption">{t('auth.emailOrPhoneHint')}</p>
           </div>
 
           <div className="auth-field">
-            <label className="auth-field__label" htmlFor="login-password">
-              <span aria-hidden>🔒</span>
+            <label className="auth-field__label text-label" htmlFor="login-password">
+              <Icon name="lock" size="sm" />
               {t('auth.passwordLabel')}
             </label>
             <div className="auth-input-wrap">
@@ -96,6 +109,7 @@ export default function LoginPage({ onLogin }) {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onFocus={bindGesture}
                 placeholder={t('auth.passwordPlaceholder')}
                 required
                 className="form-input"
@@ -106,25 +120,33 @@ export default function LoginPage({ onLogin }) {
                 type="button"
                 className="auth-input-toggle"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? t('auth.hidePassword', { defaultValue: 'Hide password' }) : t('auth.showPassword', { defaultValue: 'Show password' })}
+                aria-label={
+                  showPassword
+                    ? t('auth.hidePassword', { defaultValue: 'Hide password' })
+                    : t('auth.showPassword', { defaultValue: 'Show password' })
+                }
               >
-                {showPassword ? '👁️' : '👁️‍🗨️'}
+                <Icon name={showPassword ? 'eyeOff' : 'eye'} size="sm" />
               </button>
             </div>
           </div>
 
           {error ? (
             <div className="auth-alert" role="alert">
+              <Icon name="alert" size="sm" tone="danger" className="auth-alert__icon" />
               {error}
             </div>
           ) : null}
 
-          <button
-            type="submit"
-            className="btn btn-primary btn-block"
-            disabled={loading}
-          >
-            {loading ? t('auth.signingIn') : t('auth.signIn')}
+          <button type="submit" className="btn btn-primary btn-block btn-text" disabled={loading}>
+            {loading ? (
+              <>
+                <Icon name="loader" size="sm" tone="onPrimary" className="ui-icon--spin" />
+                {t('auth.signingIn')}
+              </>
+            ) : (
+              t('auth.signIn')
+            )}
           </button>
         </form>
 
@@ -138,7 +160,7 @@ export default function LoginPage({ onLogin }) {
           <span>{t('common.or')}</span>
         </div>
 
-        <p className="auth-footer">
+        <p className="auth-footer text-caption">
           {t('auth.noAccount')}
           {' '}
           <Link to="/register" className="auth-link">

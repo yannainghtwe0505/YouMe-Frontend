@@ -20,6 +20,7 @@ import RegisterPage from './pages/RegisterPage';
 import LanguageSelectPage from './pages/LanguageSelectPage';
 import UpgradePage from './pages/UpgradePage';
 import UpgradeSuccessPage from './pages/UpgradeSuccessPage';
+import Icon from './components/ui/Icon';
 
 function ProtectedRoute({ user, children }) {
   if (!user) {
@@ -302,16 +303,16 @@ function App() {
         <nav className="bottom-nav">
           <div className="nav-container">
             <Link to="/" className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}>
-              <span className="nav-icon">🔥</span>
+              <span className="nav-icon"><Icon name="discover" size="lg" tone={location.pathname === '/' ? 'active' : 'muted'} /></span>
               <span className="nav-label">{t('nav.discover')}</span>
             </Link>
             <Link to="/likes" className={`nav-item ${location.pathname === '/likes' ? 'active' : ''}`}>
-              <span className="nav-icon">❤️</span>
+              <span className="nav-icon"><Icon name="likes" size="lg" tone={location.pathname === '/likes' ? 'active' : 'muted'} /></span>
               <span className="nav-label">{t('nav.likes')}</span>
             </Link>
             <Link to="/messages" className={`nav-item ${location.pathname.startsWith('/messages') ? 'active' : ''}`}>
               <span className="nav-icon-wrap">
-                <span className="nav-icon">💬</span>
+                <span className="nav-icon"><Icon name="messages" size="lg" tone={location.pathname.startsWith('/messages') ? 'active' : 'muted'} /></span>
                 {messagesUnread > 0 ? (
                   <span className="nav-badge">{messagesUnread > 99 ? '99+' : messagesUnread}</span>
                 ) : null}
@@ -324,8 +325,8 @@ function App() {
               onClick={() => void toggleLanguage()}
               aria-label={t('profile.language')}
             >
-              <span className="nav-icon" style={{ fontSize: '0.85rem', fontWeight: 700 }}>
-                {normalizeToAppLocale(i18n.language) === 'ja' ? 'JA' : normalizeToAppLocale(i18n.language) === 'my' ? 'MY' : 'EN'}
+              <span className="nav-icon">
+                <Icon name="languages" size="md" tone="muted" />
               </span>
               <span className="nav-label">
                 {normalizeToAppLocale(i18n.language) === 'en'
@@ -336,7 +337,7 @@ function App() {
               </span>
             </button>
             <Link to="/profile" className={`nav-item ${location.pathname === '/profile' ? 'active' : ''}`}>
-              <span className="nav-icon">👤</span>
+              <span className="nav-icon"><Icon name="profile" size="lg" tone={location.pathname === '/profile' ? 'active' : 'muted'} /></span>
               <span className="nav-label">{t('nav.profile')}</span>
             </Link>
           </div>

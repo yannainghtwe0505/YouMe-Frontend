@@ -8,6 +8,7 @@ import {
   mergeDiscoveryFromApi,
   mergeLifestyleFromApi,
 } from './discoveryDefaults';
+import Icon from './components/ui/Icon';
 
 const placeholderAvatar = 'https://randomuser.me/api/portraits/lego/1.jpg';
 
@@ -328,7 +329,7 @@ function ProfileDetailOverlay({
         {lookingParts.length > 0 && (
           <section className="discover-detail-card">
             <h3 className="discover-detail-section-title">
-              <span className="discover-detail-section-emoji" aria-hidden>🔎</span>
+              <span className="discover-detail-section-emoji" aria-hidden><Icon name="search" size="sm" tone="active" /></span>
               {t('discover.settings.filter.lookingFor')}
             </h3>
             <p className="discover-detail-pill-text">{lookingParts.join(' · ')}</p>
@@ -338,7 +339,7 @@ function ProfileDetailOverlay({
         {(user.bio || '').trim() !== '' && (
           <section className="discover-detail-card">
             <h3 className="discover-detail-section-title">
-              <span className="discover-detail-section-emoji" aria-hidden>❝</span>
+              <span className="discover-detail-section-emoji" aria-hidden><Icon name="quote" size="sm" tone="active" /></span>
               {t('feed.detail.section.about')}
             </h3>
             <p className="discover-detail-bio">{user.bio}</p>
@@ -348,7 +349,7 @@ function ProfileDetailOverlay({
         {hasEssentials ? (
           <section className="discover-detail-card">
             <h3 className="discover-detail-section-title">
-              <span className="discover-detail-section-emoji" aria-hidden>📋</span>
+              <span className="discover-detail-section-emoji" aria-hidden><Icon name="list" size="sm" tone="active" /></span>
               {t('feed.detail.section.essentials')}
             </h3>
             <div className="discover-detail-rows">
@@ -369,7 +370,7 @@ function ProfileDetailOverlay({
         {interests.length > 0 && (
           <section className="discover-detail-card">
             <h3 className="discover-detail-section-title">
-              <span className="discover-detail-section-emoji" aria-hidden>💜</span>
+              <span className="discover-detail-section-emoji" aria-hidden><Icon name="likes" size="sm" tone="active" /></span>
               {t('profile.interests')}
             </h3>
             <div className="discover-detail-chips">
@@ -406,7 +407,7 @@ function ProfileDetailOverlay({
           return (
             <section className="discover-detail-card">
               <h3 className="discover-detail-section-title">
-                <span className="discover-detail-section-emoji" aria-hidden>✨</span>
+                <span className="discover-detail-section-emoji" aria-hidden><Icon name="sparkles" size="sm" tone="active" /></span>
                 {t('feed.detail.section.lifestyle')}
               </h3>
               <div className="discover-detail-rows">

@@ -109,7 +109,9 @@ button.nav-item {
 }
 
 .nav-icon {
-  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 4px;
   transition: transform var(--transition-fast);
 }
@@ -1423,22 +1425,49 @@ textarea {
   font-size: 0.9rem;
 }
 
-.matches-hub-empty h2 {
-  font-size: 1.2rem;
-  margin: 8px 0;
+.matches-hub-empty {
+  text-align: left;
+}
+
+.empty-state-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.empty-state-head h2 {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+  padding-top: 2px;
   color: var(--text-primary);
+  line-height: var(--leading-tight);
+  text-align: left;
 }
 
 .matches-hub-empty p {
   margin-bottom: 16px;
-  font-size: 0.95rem;
+  font-size: var(--text-sm);
+  text-align: left;
 }
 
 .matches-hub-empty-icon {
-  font-size: 2.5rem;
-  line-height: 1;
-  display: block;
-  margin-bottom: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+}
+
+.matches-hub-empty-icon .ui-icon {
+  opacity: 0.55;
 }
 
 /* —— Likes (history from Discover) —— */
@@ -2729,8 +2758,15 @@ img.discover-detail-hero-bg {
 }
 
 .discover-detail-section-emoji {
-  font-size: 1.1rem;
-  opacity: 0.9;
+  display: inline-flex;
+  align-items: center;
+  margin-right: 6px;
+  vertical-align: middle;
+  opacity: 0.92;
+}
+
+.discover-detail-section-emoji .ui-icon {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .discover-detail-pill-text {

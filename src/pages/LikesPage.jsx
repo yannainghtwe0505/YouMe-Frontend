@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { cssUrlValue } from '../imageUtils';
+import Icon from '../components/ui/Icon';
 
 const FALLBACK_AVATAR = 'https://randomuser.me/api/portraits/lego/1.jpg';
 
@@ -173,8 +174,12 @@ export default function LikesPage() {
       {tab === 'inbound' ? (
         inboundCount === 0 ? (
           <div className="matches-hub-empty card card-surface">
-            <span className="matches-hub-empty-icon" aria-hidden>✨</span>
-            <h2>{t('likes.emptyInboundTitle')}</h2>
+            <div className="empty-state-head">
+              <h2>{t('likes.emptyInboundTitle')}</h2>
+              <span className="matches-hub-empty-icon empty-state-icon" aria-hidden>
+                <Icon name="sparkles" size="xl" tone="active" />
+              </span>
+            </div>
             <p>{t('likes.emptyInboundBody')}</p>
             <Link to="/" className="btn btn-primary">{t('likes.goDiscover')}</Link>
           </div>
@@ -263,8 +268,12 @@ export default function LikesPage() {
         )
       ) : outbound.length === 0 ? (
         <div className="matches-hub-empty card card-surface">
-          <span className="matches-hub-empty-icon" aria-hidden>❤️</span>
-          <h2>{t('likes.emptyOutboundTitle')}</h2>
+          <div className="empty-state-head">
+            <h2>{t('likes.emptyOutboundTitle')}</h2>
+            <span className="matches-hub-empty-icon empty-state-icon" aria-hidden>
+              <Icon name="likes" size="xl" tone="active" />
+            </span>
+          </div>
           <p>{t('likes.emptyOutboundBody')}</p>
           <Link to="/" className="btn btn-primary">{t('likes.goDiscover')}</Link>
         </div>

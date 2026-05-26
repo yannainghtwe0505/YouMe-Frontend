@@ -1,0 +1,105 @@
+/* Login-only nature backdrop */
+
+.login-nature {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.login-nature__tree {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(95vw, 480px);
+  height: auto;
+  max-height: 42vh;
+  opacity: 0.35;
+}
+
+.login-nature__leaves {
+  position: absolute;
+  inset: 0;
+}
+
+.login-nature__leaf {
+  position: absolute;
+  top: -24px;
+  width: 14px;
+  height: 18px;
+  background: linear-gradient(145deg, var(--nature-leaf-light), var(--nature-leaf));
+  border-radius: 0 80% 0 80%;
+  opacity: 0;
+  transform: rotate(0deg);
+  animation-name: leafFall;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  box-shadow: 0 1px 2px rgba(45, 74, 62, 0.12);
+}
+
+.login-nature__leaf:nth-child(odd) {
+  width: 11px;
+  height: 14px;
+  border-radius: 80% 0 80% 0;
+}
+
+@keyframes leafFall {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  8% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.4;
+    transform: translateY(48vh) translateX(calc(var(--leaf-drift, 0px) * 0.5)) rotate(120deg);
+  }
+  85% {
+    opacity: 0.15;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(105vh) translateX(var(--leaf-drift, 0px)) rotate(240deg);
+  }
+}
+
+.auth-page-root--login {
+  background: linear-gradient(
+      180deg,
+      rgba(248, 252, 249, 0.95) 0%,
+      rgba(241, 248, 244, 0.98) 45%,
+      var(--bg-mesh) 100%
+    ),
+    var(--nature-sky-tint);
+}
+
+.auth-page-root--login .auth-orb {
+  opacity: 0.28;
+  filter: blur(80px);
+}
+
+.auth-page-root--login .auth-orb--ring {
+  opacity: 0.2;
+}
+
+.login-audio-hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-nature__leaf {
+    animation: none !important;
+    display: none;
+  }
+}

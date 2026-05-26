@@ -1,0 +1,55 @@
+.ui-icon {
+  flex-shrink: 0;
+  stroke: currentColor;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.ui-icon--default {
+  color: var(--icon-color);
+}
+
+.ui-icon--muted {
+  color: var(--icon-color-muted);
+}
+
+.ui-icon--active {
+  color: var(--icon-color-active);
+}
+
+.ui-icon--onPrimary {
+  color: var(--icon-color-on-primary);
+}
+
+.ui-icon--danger {
+  color: var(--icon-color-danger);
+}
+
+.ui-icon--success {
+  color: var(--icon-color-success);
+}
+
+.nav-item .ui-icon {
+  color: var(--icon-color-muted);
+}
+
+.nav-item:hover .ui-icon,
+.nav-item.active .ui-icon {
+  color: var(--icon-color-active);
+}
+
+.nav-item:hover .ui-icon {
+  transform: scale(1.08);
+}
+
+.auth-field__label .ui-icon {
+  color: var(--icon-color-active);
+  opacity: 0.85;
+}
+
+.empty-state-icon .ui-icon {
+  color: var(--icon-color-active);
+}
+
+.ui-icon--spin {
+  animation: spin 0.75s linear infinite;
+}

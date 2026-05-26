@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { cssUrlValue } from '../imageUtils';
+import Icon from '../components/ui/Icon';
 
 const placeholderAvatar = 'https://randomuser.me/api/portraits/lego/1.jpg';
 
@@ -64,8 +65,12 @@ export default function MatchesPage() {
 
       {matches.length === 0 ? (
         <div className="matches-hub-empty card card-surface">
-          <span className="matches-hub-empty-icon" aria-hidden>💬</span>
-          <h2>{t('matches.emptyTitle')}</h2>
+          <div className="empty-state-head">
+            <h2>{t('matches.emptyTitle')}</h2>
+            <span className="matches-hub-empty-icon empty-state-icon" aria-hidden>
+              <Icon name="messages" size="xl" tone="active" />
+            </span>
+          </div>
           <p>{t('matches.emptyBody')}</p>
           <Link to="/" className="btn btn-primary">{t('matches.goDiscover')}</Link>
         </div>

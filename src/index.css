@@ -9,18 +9,18 @@
   font-weight: 400;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 
-  /* Brand — Vite-inspired violet + accent */
-  --primary: #646cff;
-  --primary-dark: #535bf2;
-  --primary-light: #818cf8;
-  --secondary: #5b4fdb;
-  --secondary-dark: #4338ca;
-  --accent: #ec4899;
-  --accent-soft: rgba(236, 72, 153, 0.12);
+  /* Brand — warm violet + rose accent (dating, accessible) */
+  --primary: #6d5ef7;
+  --primary-dark: #5346e0;
+  --primary-light: #8b7cff;
+  --secondary: #7c6cfd;
+  --secondary-dark: #5b4fdb;
+  --accent: #e879a9;
+  --accent-soft: rgba(232, 121, 169, 0.14);
   --success: #0d9488;
-  --warning: #fbbf24;
-  --danger: #f43f5e;
-  --error: #e11d48;
+  --warning: #d97706;
+  --danger: #e11d48;
+  --error: #be123c;
 
   /* Neutrals — refined contrast */
   --text-primary: #0f172a;
@@ -44,7 +44,7 @@
   --bg-gradient-auth: var(--bg-mesh);
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #646cff 0%, #8b5cf6 50%, #a855f7 100%);
+  --gradient-primary: linear-gradient(135deg, #6d5ef7 0%, #8b5cf6 50%, #c084fc 100%);
   --gradient-secondary: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
   --gradient-warm: linear-gradient(135deg, #646cff 0%, #f472b6 100%);
   --gradient-cool: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
@@ -165,26 +165,34 @@ h6 {
 }
 
 h1 {
-  font-size: 2rem;
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
 }
 h2 {
-  font-size: 1.5rem;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
 }
 h3 {
-  font-size: 1.25rem;
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
 }
 h4 {
-  font-size: 1.125rem;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
 }
 h5 {
-  font-size: 1rem;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
 }
 h6 {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
 }
 
 p {
   margin: 0;
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
   color: var(--text-secondary);
 }
 
@@ -256,13 +264,13 @@ input[type='radio'] {
 
 @media (max-width: 768px) {
   h1 {
-    font-size: 1.5rem;
+    font-size: var(--text-2xl);
   }
   h2 {
-    font-size: 1.25rem;
+    font-size: var(--text-xl);
   }
   h3 {
-    font-size: 1.125rem;
+    font-size: var(--text-lg);
   }
 }
 

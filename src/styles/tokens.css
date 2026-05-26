@@ -1,0 +1,96 @@
+/**
+ * YouMe design tokens — unified across EN / JA / MY (same scale, no per-locale sizes).
+ */
+
+:root {
+  /* —— Typography scale —— */
+  --text-xs: 0.75rem;      /* 12px — captions, badges */
+  --text-sm: 0.875rem;     /* 14px — secondary body, hints */
+  --text-base: 1rem;       /* 16px — body */
+  --text-lg: 1.125rem;     /* 18px — lead / large body */
+  --text-xl: 1.25rem;      /* 20px — section titles */
+  --text-2xl: 1.5rem;      /* 24px — page titles */
+  --text-3xl: 1.875rem;    /* 30px — hero titles */
+  --text-4xl: 2.25rem;     /* 36px — marketing hero */
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* —— Icon scale (Lucide outline, stroke 1.75) —— */
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+  --icon-xl: 32px;
+  --icon-stroke: 1.75;
+
+  --icon-color: var(--text-secondary);
+  --icon-color-muted: var(--text-light);
+  --icon-color-active: var(--primary);
+  --icon-color-on-primary: #ffffff;
+  --icon-color-danger: var(--error);
+  --icon-color-success: var(--success);
+
+  /* —— Semantic surfaces —— */
+  --surface-default: var(--bg-primary);
+  --surface-raised: var(--glass-bg);
+  --surface-sunken: var(--bg-secondary);
+  --surface-overlay: rgba(15, 23, 42, 0.45);
+
+  /* —— Semantic feedback —— */
+  --color-info: #3b82f6;
+  --color-info-bg: rgba(59, 130, 246, 0.1);
+  --color-success: var(--success);
+  --color-success-bg: rgba(13, 148, 136, 0.1);
+  --color-warning: var(--warning);
+  --color-warning-bg: rgba(251, 191, 36, 0.12);
+  --color-error: var(--error);
+  --color-error-bg: rgba(225, 29, 72, 0.08);
+
+  /* —— Nature login palette —— */
+  --nature-leaf: #6b9080;
+  --nature-leaf-light: #a4c3b2;
+  --nature-tree: rgba(45, 74, 62, 0.14);
+  --nature-sky-tint: rgba(163, 201, 168, 0.2);
+}
+
+/* Typography roles */
+.text-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.03em;
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+}
+
+.text-body {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--leading-relaxed);
+  color: var(--text-secondary);
+}
+
+.text-caption {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--text-secondary);
+}
+
+.text-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+}
+
+.btn-text {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.01em;
+}

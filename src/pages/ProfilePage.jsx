@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { normalizeToAppLocale } from '../lib/locale';
 import api from '../api';
+import Icon from '../components/ui/Icon';
 
 function ageToBirthdayIso(age) {
   if (age == null || age === '') return null;
@@ -455,7 +456,10 @@ export default function ProfilePage({ onLogout }) {
 
   if (!profile) return (
     <div className="empty fade-in">
-      <div>👤 {t('profile.missingProfileTitle')}</div>
+      <div className="empty-state-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <Icon name="profile" size="lg" tone="muted" />
+        <span>{t('profile.missingProfileTitle')}</span>
+      </div>
       <div style={{ fontSize: '14px', marginTop: '8px' }}>{t('profile.missingProfileHint')}</div>
     </div>
   );
