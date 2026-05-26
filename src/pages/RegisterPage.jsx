@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import YouMeLogo from '../components/YouMeLogo';
+import GradientOrbs from '../components/auth/GradientOrbs';
 import { labelTokyoWard } from '../tokyoWardI18n';
 
 const MAX_PHOTOS = 6;
@@ -1596,17 +1597,9 @@ export default function RegisterPage({ onRegister }) {
 
   if (booting) {
     return (
-      <div
-        className="auth-page-root"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        padding: 'clamp(12px, 4vw, 20px)',
-        background: 'var(--bg-gradient-auth)',
-      }}
-    >
-      <div className="loading" style={{ color: 'var(--text-secondary)' }}>
+      <div className="auth-page-root">
+        <GradientOrbs />
+      <div className="loading" style={{ color: 'var(--text-secondary)', position: 'relative', zIndex: 2 }}>
           {tr('register.booting')}
         </div>
       </div>
@@ -1614,17 +1607,9 @@ export default function RegisterPage({ onRegister }) {
   }
 
   return (
-    <div
-      className="auth-page-root"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'clamp(12px, 4vw, 20px)',
-        background: 'var(--bg-gradient-auth)',
-      }}
-    >
-      <div className="fade-in" style={{ width: '100%', maxWidth: 'min(100vw - 24px, 480px)', margin: '0 auto' }}>
+    <div className="auth-page-root">
+      <GradientOrbs />
+      <div className="auth-page-inner fade-in" style={{ maxWidth: 'min(100vw - 24px, 480px)' }}>
         <div className="auth-hero-stagger" style={{ textAlign: 'center', marginBottom: 24 }}>
           <YouMeLogo size={72} className="auth-hero-logo" />
           <h1
@@ -1645,7 +1630,7 @@ export default function RegisterPage({ onRegister }) {
           </p>
         </div>
 
-        <div className="card auth-card-stagger" style={{ padding: 'clamp(24px, 5vw, 32px)' }}>
+        <div className="glass-card auth-card-stagger">
           {renderBody()}
           {['method', 'done'].includes(step) ? (
             <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: 24, marginBottom: 0, fontSize: '0.95rem' }}>
