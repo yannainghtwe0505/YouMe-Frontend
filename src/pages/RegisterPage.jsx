@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
+import YouMeLogo from '../components/YouMeLogo';
 import { labelTokyoWard } from '../tokyoWardI18n';
 
 const MAX_PHOTOS = 6;
@@ -1625,7 +1626,7 @@ export default function RegisterPage({ onRegister }) {
     >
       <div className="fade-in" style={{ width: '100%', maxWidth: 'min(100vw - 24px, 480px)', margin: '0 auto' }}>
         <div className="auth-hero-stagger" style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🎉</div>
+          <YouMeLogo size={72} className="auth-hero-logo" />
           <h1
             style={{
               fontSize: 'clamp(1.35rem, 5vw, 1.75rem)',

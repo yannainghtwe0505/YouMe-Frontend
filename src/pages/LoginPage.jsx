@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
+import YouMeLogo from '../components/YouMeLogo';
 
 export default function LoginPage({ onLogin }) {
   const { t } = useTranslation();
@@ -64,11 +65,7 @@ export default function LoginPage({ onLogin }) {
     >
       <div className="fade-in" style={{ width: '100%', maxWidth: '420px' }}>
         <div className="auth-hero-stagger" style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <div style={{
-            fontSize: '3rem',
-            marginBottom: '16px',
-          }}
-          >❤️</div>
+          <YouMeLogo size={80} className="auth-hero-logo" />
           <h1 style={{
             fontSize: 'clamp(1.5rem, 5vw, 2rem)',
             fontWeight: '700',

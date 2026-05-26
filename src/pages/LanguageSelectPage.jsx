@@ -9,6 +9,7 @@ import {
   normalizeToAppLocale,
   resolveLocaleFromNavigator,
 } from '../lib/locale';
+import YouMeLogo from '../components/YouMeLogo';
 
 export default function LanguageSelectPage() {
   const { t } = useTranslation();
@@ -50,7 +51,7 @@ export default function LanguageSelectPage() {
     >
       <div style={{ width: '100%', maxWidth: 440 }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ fontSize: '2.75rem', marginBottom: 12 }}>🌐</div>
+          <YouMeLogo size={72} className="auth-hero-logo" />
           <h1
             style={{
               fontSize: 'clamp(1.35rem, 4.5vw, 1.75rem)',

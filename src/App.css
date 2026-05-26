@@ -2827,6 +2827,45 @@ img.discover-detail-hero-bg {
   }
 }
 
+.youme-logo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.youme-logo {
+  display: block;
+  filter: drop-shadow(0 10px 28px rgba(109, 94, 247, 0.38));
+  animation: youmeLogoFloat 3.2s ease-in-out infinite;
+}
+
+.youme-logo-wordmark {
+  display: block;
+  margin-top: 10px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: var(--gradient-warm);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.auth-hero-logo {
+  margin-bottom: 4px;
+}
+
+@keyframes youmeLogoFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
 .auth-page-root {
   min-height: 100vh;
 }

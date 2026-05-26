@@ -148,8 +148,10 @@ function App() {
       setUser(userData);
       return;
     }
+    // Set user immediately so ProtectedRoute and login redirect work before fetchMe resolves.
+    setUser({ ...userData, token });
     fetchMe(token).then((me) => {
-      setUser(me ? { ...userData, ...me, token } : { ...userData, token });
+      if (me) setUser({ ...userData, ...me, token });
     });
   };
 
@@ -266,11 +268,15 @@ function App() {
           <Route path="/language" element={<LanguageSelectPage />} />
           <Route
             path="/login"
-            element={(
-              <LanguageGate>
-                <LoginPage onLogin={handleLogin} />
-              </LanguageGate>
-            )}
+            element={
+              user && user.registrationComplete !== false ? (
+                <Navigate to="/" replace />
+              ) : (
+                <LanguageGate>
+                  <LoginPage onLogin={handleLogin} />
+                </LanguageGate>
+              )
+            }
           />
           <Route
             path="/register"
@@ -288,7 +294,11 @@ function App() {
         </Routes>
       </div>
 
-      {user && user.registrationComplete !== false && !location.pathname.startsWith('/upgrade') && (
+      {user
+        && user.registrationComplete !== false
+        && !location.pathname.startsWith('/upgrade')
+        && !['/login', '/register', '/language'].includes(location.pathname)
+        && (
         <nav className="bottom-nav">
           <div className="nav-container">
             <Link to="/" className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}>
