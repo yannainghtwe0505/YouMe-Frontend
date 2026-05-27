@@ -22,7 +22,7 @@ function deriveWsBase() {
 /**
  * @param {() => string | null} getToken
  * @param {(payload: object) => void} onMessage
- * @returns {{ close: () => void, reconnect: () => void }}
+ * @returns {{ close: () => void, reconnect: () => void, send: (payload: object) => void }}
  */
 export function createMatchChatSocket(getToken, onMessage) {
   let ws = null;
@@ -81,6 +81,14 @@ export function createMatchChatSocket(getToken, onMessage) {
         /* ignore */
       }
       if (!closed) connect();
+    },
+    send: (payload) => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      try {
+        ws.send(JSON.stringify(payload));
+      } catch {
+        /* ignore */
+      }
     },
   };
 }

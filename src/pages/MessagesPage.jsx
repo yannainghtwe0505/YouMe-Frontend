@@ -45,6 +45,19 @@ function normalizeReplyIdeas(raw) {
     .filter(Boolean);
 }
 
+function formatLastActiveLabel(lastActiveAt, t) {
+  if (!lastActiveAt) return t('messages.offlineUnknown');
+  const d = new Date(lastActiveAt);
+  if (Number.isNaN(d.getTime())) return t('messages.offlineUnknown');
+  const diffMs = Date.now() - d.getTime();
+  const min = Math.max(1, Math.floor(diffMs / 60000));
+  if (min < 60) return t('messages.lastActiveMin', { count: min });
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return t('messages.lastActiveHour', { count: hr });
+  const day = Math.floor(hr / 24);
+  return t('messages.lastActiveDay', { count: day });
+}
+
 export default function MessagesPage() {
   const { t } = useTranslation();
   const { matchId } = useParams();
@@ -60,11 +73,15 @@ export default function MessagesPage() {
   const [replyIdeas, setReplyIdeas] = useState([]);
   const [replyLoading, setReplyLoading] = useState(false);
   const [aiQuota, setAiQuota] = useState(null);
+  const [peerTyping, setPeerTyping] = useState(false);
   /** Fade-out then clear suggestions after user sends a message */
   const [ideasExiting, setIdeasExiting] = useState(false);
   /** Bumps when a new suggestion batch loads (enter animation) */
   const [suggestionsBatchKey, setSuggestionsBatchKey] = useState(0);
   const messagesEndRef = useRef(null);
+  const socketRef = useRef(null);
+  const typingResetTimerRef = useRef(null);
+  const peerTypingClearTimerRef = useRef(null);
   const menuWrapRef = useRef(null);
   const icebreakerAttempted = useRef(false);
   const exitTimerRef = useRef(null);
@@ -87,6 +104,22 @@ export default function MessagesPage() {
 
   useEffect(() => () => {
     if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+    if (typingResetTimerRef.current) clearTimeout(typingResetTimerRef.current);
+    if (peerTypingClearTimerRef.current) clearTimeout(peerTypingClearTimerRef.current);
+  }, []);
+
+  const applyReadReceipt = useCallback((readAtIso) => {
+    if (!readAtIso) return;
+    const readAt = new Date(readAtIso).getTime();
+    if (Number.isNaN(readAt)) return;
+    setMessages((prev) => prev.map((msg) => {
+      if (!msg.isFromCurrentUser || msg.isAssistant) return msg;
+      const created = msg.createdAt ? new Date(msg.createdAt).getTime() : 0;
+      if (created && readAt >= created) {
+        return { ...msg, readStatus: 'read' };
+      }
+      return msg;
+    }));
   }, []);
 
   const loadMessages = useCallback(
@@ -131,11 +164,46 @@ export default function MessagesPage() {
       (data) => {
         if (data?.type === 'chat' && String(data.matchId) === String(matchId)) {
           loadMessages({ silent: true });
+          setPeerTyping(false);
+          if (peerTypingClearTimerRef.current) {
+            clearTimeout(peerTypingClearTimerRef.current);
+            peerTypingClearTimerRef.current = null;
+          }
+        }
+        if (data?.type === 'typing' && String(data.matchId) === String(matchId)) {
+          const nextTyping = Boolean(data?.isTyping);
+          setPeerTyping(nextTyping);
+          if (peerTypingClearTimerRef.current) {
+            clearTimeout(peerTypingClearTimerRef.current);
+            peerTypingClearTimerRef.current = null;
+          }
+          if (nextTyping) {
+            peerTypingClearTimerRef.current = window.setTimeout(() => {
+              setPeerTyping(false);
+              peerTypingClearTimerRef.current = null;
+            }, 3500);
+          }
+        }
+        if (data?.type === 'read_receipt' && String(data.matchId) === String(matchId)) {
+          applyReadReceipt(data.readAt);
         }
       },
     );
-    return () => sock.close();
-  }, [matchId, loadMessages]);
+    socketRef.current = sock;
+    return () => {
+      if (typingResetTimerRef.current) {
+        clearTimeout(typingResetTimerRef.current);
+        typingResetTimerRef.current = null;
+      }
+      if (peerTypingClearTimerRef.current) {
+        clearTimeout(peerTypingClearTimerRef.current);
+        peerTypingClearTimerRef.current = null;
+      }
+      setPeerTyping(false);
+      socketRef.current = null;
+      sock.close();
+    };
+  }, [matchId, loadMessages, applyReadReceipt]);
 
   useEffect(() => {
     api.get('/ai/capabilities')
@@ -183,6 +251,8 @@ export default function MessagesPage() {
           userId: row.peerUserId,
           name: row.peerName,
           avatar: row.peerAvatar,
+          online: Boolean(row.peerOnline),
+          lastActiveAt: row.peerLastActiveAt || null,
         });
       }
     } catch {
@@ -308,6 +378,27 @@ export default function MessagesPage() {
     setMenuOpen(false);
   };
 
+  const reportPeer = async () => {
+    if (!peer?.userId) return;
+    const reasonRaw = window.prompt(t('messages.reportReasonPrompt'));
+    if (reasonRaw == null) return;
+    const reason = String(reasonRaw).trim().toUpperCase().replace(/\s+/g, '_');
+    if (!reason) return;
+    const detailsRaw = window.prompt(t('messages.reportDetailsPrompt'));
+    const details = detailsRaw == null ? '' : String(detailsRaw).trim();
+    try {
+      await api.post(`/reports/users/${peer.userId}`, {
+        reason,
+        details: details || null,
+        matchId: Number(matchId),
+      });
+      setError(t('messages.reportSuccess'));
+    } catch {
+      setError(t('messages.reportError'));
+    }
+    setMenuOpen(false);
+  };
+
   const sendMessage = async () => {
     if (!body.trim()) return;
 
@@ -318,6 +409,11 @@ export default function MessagesPage() {
     try {
       await api.post(`/matches/${matchId}/messages`, { body });
       setBody('');
+      socketRef.current?.send({ type: 'typing', matchId, isTyping: false });
+      if (typingResetTimerRef.current) {
+        clearTimeout(typingResetTimerRef.current);
+        typingResetTimerRef.current = null;
+      }
       if (hadSuggestions) {
         setIdeasExiting(true);
         clearSuggestionsAfterExit();
@@ -339,6 +435,26 @@ export default function MessagesPage() {
 
   const pickSuggestion = (text) => {
     setBody(text);
+  };
+
+  const handleComposerChange = (e) => {
+    const next = e.target.value;
+    setBody(next);
+    if (!socketRef.current || !matchId) return;
+    if (!next.trim()) {
+      socketRef.current.send({ type: 'typing', matchId, isTyping: false });
+      if (typingResetTimerRef.current) {
+        clearTimeout(typingResetTimerRef.current);
+        typingResetTimerRef.current = null;
+      }
+      return;
+    }
+    socketRef.current.send({ type: 'typing', matchId, isTyping: true });
+    if (typingResetTimerRef.current) clearTimeout(typingResetTimerRef.current);
+    typingResetTimerRef.current = window.setTimeout(() => {
+      socketRef.current?.send({ type: 'typing', matchId, isTyping: false });
+      typingResetTimerRef.current = null;
+    }, 1600);
   };
 
   if (loading) return (
@@ -367,7 +483,9 @@ export default function MessagesPage() {
           <div className="chat-header-text">
             <h1>{peer?.name || t('messages.chatFallbackTitle')}</h1>
             <p>
-              {peer?.name ? t('messages.matched') : t('messages.matchNumber', { id: matchId })}
+              {peer?.name
+                ? (peer?.online ? t('messages.onlineNow') : formatLastActiveLabel(peer?.lastActiveAt, t))
+                : t('messages.matchNumber', { id: matchId })}
               {llmConfigured ? <span className="chat-ai-badge">{t('messages.aiTipsBadge')}</span> : null}
             </p>
           </div>
@@ -389,6 +507,9 @@ export default function MessagesPage() {
                 <button type="button" className="chat-menu-item danger" role="menuitem" onClick={blockPeer}>
                   {t('messages.menuBlock')}
                 </button>
+                <button type="button" className="chat-menu-item danger" role="menuitem" onClick={reportPeer}>
+                  {t('messages.menuReport')}
+                </button>
               </div>
             ) : null}
           </div>
@@ -404,7 +525,19 @@ export default function MessagesPage() {
                 {msg.isAssistant ? (
                   <span className="chat-assistant-label">{t('messages.assistantLabel')}</span>
                 ) : null}
-                {msg.body}
+                <span className="message-body-text">{msg.body}</span>
+                {msg.isFromCurrentUser && !msg.isAssistant ? (
+                  <span
+                    className={`message-read-status message-read-status--${msg.readStatus || 'delivered'}`}
+                    aria-label={
+                      msg.readStatus === 'read'
+                        ? t('messages.readReceiptRead')
+                        : t('messages.readReceiptDelivered')
+                    }
+                  >
+                    {msg.readStatus === 'read' ? '✓✓' : '✓'}
+                  </span>
+                ) : null}
               </div>
             ))
           ) : (
@@ -419,6 +552,7 @@ export default function MessagesPage() {
           )}
           <div ref={messagesEndRef} />
         </div>
+        {peerTyping ? <div className="chat-typing-indicator">{t('messages.typing')}</div> : null}
 
         <div className="chat-ai-toolbar">
           <button
@@ -473,7 +607,7 @@ export default function MessagesPage() {
         <div className="chat-composer-row">
           <textarea
             value={body}
-            onChange={e => setBody(e.target.value)}
+            onChange={handleComposerChange}
             onKeyDown={handleKeyPress}
             placeholder={t('messages.composerPlaceholder')}
             className="form-input chat-composer-input"

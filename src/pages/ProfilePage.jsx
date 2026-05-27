@@ -154,6 +154,10 @@ export default function ProfilePage({ onLogout }) {
   const [pwdMsg, setPwdMsg] = useState(null);
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushDevices, setPushDevices] = useState(0);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushMsg, setPushMsg] = useState(null);
 
   useEffect(() => {
     api.get('/me')
@@ -170,6 +174,15 @@ export default function ProfilePage({ onLogout }) {
         }
       });
   }, [t]);
+
+  useEffect(() => {
+    api.get('/me/notifications/preferences')
+      .then((res) => {
+        setPushEnabled(Boolean(res.data?.pushEnabled));
+        setPushDevices(Number(res.data?.registeredDevices) || 0);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const onVis = () => {
@@ -357,6 +370,59 @@ export default function ProfilePage({ onLogout }) {
     }
   };
 
+  const ensureLocalPushToken = () => {
+    const key = 'youme-web-push-token';
+    let token = localStorage.getItem(key);
+    if (token) return token;
+    token = `web-${crypto.randomUUID()}`;
+    localStorage.setItem(key, token);
+    return token;
+  };
+
+  const enablePush = async () => {
+    setPushBusy(true);
+    setPushMsg(null);
+    try {
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+      const token = ensureLocalPushToken();
+      const locale = normalizeToAppLocale(i18n.language);
+      const res = await api.put('/me/notifications/device-token', {
+        token,
+        platform: 'WEB',
+        locale,
+        enabled: true,
+      });
+      setPushEnabled(Boolean(res.data?.pushEnabled));
+      setPushDevices(Number(res.data?.registeredDevices) || 0);
+      setPushMsg({ type: 'ok', text: t('profile.pushEnabledOk') });
+    } catch {
+      setPushMsg({ type: 'err', text: t('profile.pushEnableError') });
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
+  const disablePush = async () => {
+    setPushBusy(true);
+    setPushMsg(null);
+    try {
+      const token = localStorage.getItem('youme-web-push-token');
+      if (token) {
+        await api.delete('/me/notifications/device-token', { data: { token } }).catch(() => {});
+      }
+      const res = await api.put('/me/notifications/preferences', { enabled: false });
+      setPushEnabled(Boolean(res.data?.pushEnabled));
+      setPushDevices(Number(res.data?.registeredDevices) || 0);
+      setPushMsg({ type: 'ok', text: t('profile.pushDisabledOk') });
+    } catch {
+      setPushMsg({ type: 'err', text: t('profile.pushDisableError') });
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
   if (loading) return (
     <div className="loading fade-in">
       <div className="pulse">{t('profile.loading')}</div>
@@ -522,6 +588,8 @@ export default function ProfilePage({ onLogout }) {
             </Link>
             <span className="profile-quick-sep" aria-hidden>·</span>
             <Link to="/upgrade">{t('profile.upgradePlansLink')}</Link>
+            <span className="profile-quick-sep" aria-hidden>·</span>
+            <Link to="/safety">{t('profile.safetyLink')}</Link>
           </nav>
         </div>
 
@@ -707,6 +775,9 @@ export default function ProfilePage({ onLogout }) {
 
             <details className="profile-account-details">
               <summary>{t('profile.accountSecurity')}</summary>
+              <p className="profile-account-hint" style={{ margin: '12px 16px 0' }}>
+                <Link to="/safety">{t('profile.safetyCenterLink')}</Link>
+              </p>
               <div className="profile-account-body">
                 {pwdMsg ? (
                   <div
@@ -746,6 +817,37 @@ export default function ProfilePage({ onLogout }) {
                   >
                     {pwdBusy ? t('profile.savingPassword') : t('profile.updatePassword')}
                   </button>
+                </form>
+                <form className="profile-account-form" onSubmit={(e) => e.preventDefault()}>
+                  <h3 className="profile-account-h3">{t('profile.pushTitle')}</h3>
+                  <p className="profile-account-hint">
+                    {t('profile.pushHint', { count: pushDevices })}
+                  </p>
+                  {pushMsg ? (
+                    <div
+                      className={`profile-form-flash ${pushMsg.type === 'ok' ? 'profile-form-flash-ok' : 'profile-form-flash-err'}`}
+                    >
+                      {pushMsg.text}
+                    </div>
+                  ) : null}
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm profile-btn-narrow"
+                      onClick={enablePush}
+                      disabled={pushBusy}
+                    >
+                      {pushBusy ? t('common.saving') : t('profile.pushEnableBtn')}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm profile-btn-narrow"
+                      onClick={disablePush}
+                      disabled={pushBusy || !pushEnabled}
+                    >
+                      {pushBusy ? t('common.saving') : t('profile.pushDisableBtn')}
+                    </button>
+                  </div>
                 </form>
                 <form onSubmit={submitDeleteAccount} className="profile-account-form profile-delete-form">
                   <h3 className="profile-account-h3">{t('profile.deleteAccount')}</h3>

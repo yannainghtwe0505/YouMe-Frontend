@@ -19,6 +19,19 @@ function formatMessageTime(iso) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+function formatLastActive(iso, t) {
+  if (!iso) return t('matches.offlineUnknown');
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return t('matches.offlineUnknown');
+  const diffMs = Date.now() - d.getTime();
+  const min = Math.max(1, Math.floor(diffMs / 60000));
+  if (min < 60) return t('matches.lastActiveMin', { count: min });
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return t('matches.lastActiveHour', { count: hr });
+  const day = Math.floor(hr / 24);
+  return t('matches.lastActiveDay', { count: day });
+}
+
 export default function MatchesPage() {
   const { t } = useTranslation();
   const [matches, setMatches] = useState([]);
@@ -95,6 +108,12 @@ export default function MatchesPage() {
                       {timeLabel ? (
                         <span className="matches-time">{timeLabel}</span>
                       ) : null}
+                    </div>
+                    <div className="matches-presence-row">
+                      <span className={`matches-presence-dot ${m.peerOnline ? 'online' : ''}`} />
+                      <span className="matches-presence-text">
+                        {m.peerOnline ? t('matches.onlineNow') : formatLastActive(m.peerLastActiveAt, t)}
+                      </span>
                     </div>
                     <span className={`matches-sub ${unread > 0 ? 'matches-sub-unread' : ''}`}>
                       {preview}

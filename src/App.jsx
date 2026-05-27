@@ -20,6 +20,7 @@ import RegisterPage from './pages/RegisterPage';
 import LanguageSelectPage from './pages/LanguageSelectPage';
 import UpgradePage from './pages/UpgradePage';
 import UpgradeSuccessPage from './pages/UpgradeSuccessPage';
+import SafetyPage from './pages/SafetyPage';
 import Icon from './components/ui/Icon';
 
 function ProtectedRoute({ user, children }) {
@@ -136,6 +137,28 @@ function App() {
   }, [user, refreshMessagesUnread, location.pathname, t]);
 
   useEffect(() => {
+    if (!user || user.registrationComplete === false) return undefined;
+    let cancelled = false;
+    const ping = () => {
+      if (cancelled || document.visibilityState !== 'visible') return;
+      api.post('/presence/ping').catch(() => {});
+    };
+    ping();
+    const id = setInterval(ping, 45000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') ping();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', ping);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', ping);
+    };
+  }, [user]);
+
+  useEffect(() => {
     if (!user || user.registrationComplete === false) {
       document.title = t('app.title');
       return;
@@ -247,6 +270,14 @@ function App() {
             element={
               <ProtectedRoute user={user}>
                 <PhotosPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/safety"
+            element={
+              <ProtectedRoute user={user}>
+                <SafetyPage />
               </ProtectedRoute>
             }
           />
