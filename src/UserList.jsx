@@ -9,6 +9,10 @@ import {
   mergeLifestyleFromApi,
 } from './discoveryDefaults';
 import Icon from './components/ui/Icon';
+import HelpIcon from './components/help/HelpIcon';
+import CoachMark from './components/help/CoachMark';
+import { useHelp } from './context/HelpProvider';
+import { TOOLTIP_IDS } from './help/constants';
 
 const placeholderAvatar = 'https://randomuser.me/api/portraits/lego/1.jpg';
 
@@ -99,7 +103,7 @@ function DiscoverCardPhotos({ user, placeholder }) {
                 key={i}
                 type="button"
                 className={`youme-photo-dot${i === idx ? ' active' : ''}`}
-                aria-label={`Photo ${i + 1}`}
+                aria-label={t('feed.detail.photoNumber', { n: i + 1 })}
                 aria-current={i === idx ? 'true' : undefined}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -470,6 +474,7 @@ function ProfileDetailOverlay({
 
 export default function UserList() {
   const { t } = useTranslation();
+  const { isOnboardingDone } = useHelp();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -835,7 +840,7 @@ export default function UserList() {
           </button>
           <div className="discover-header-main">
             <h1>{t('nav.discover')}</h1>
-            <p>{t('feed.header.subtitle')}</p>
+            <p>{isOnboardingDone ? t('feed.header.subtitle') : t('feed.header.subtitleBeginner')}</p>
             {discoveryLimited && activeRadiusKm != null ? (
               <p className={`discover-filter-chip${viewerHasCoords ? '' : ' discover-filter-chip-warn'}`}>
                 {viewerHasCoords ? (
@@ -846,7 +851,7 @@ export default function UserList() {
               </p>
             ) : null}
           </div>
-          <div className="discover-settings-trigger-spacer" aria-hidden />
+          <HelpIcon className="discover-help-trigger" />
         </div>
         <div className="discover-progress-track">
           <div className="discover-progress-fill" style={{ width: `${progress}%` }} />
@@ -916,35 +921,61 @@ export default function UserList() {
       </div>
 
       <div className="youme-action-row">
-        <button
-          type="button"
-          onClick={() => handleAction('dislike')}
-          className="youme-action dislike"
-          disabled={animating}
-          title={t('feed.action.pass')}
+        <CoachMark
+          tooltipId={TOOLTIP_IDS.DISCOVER_PASS}
+          titleKey="help.tooltips.discoverPass.title"
+          bodyKey="help.tooltips.discoverPass.body"
+          placement="top"
         >
-          ✕
-        </button>
+          <button
+            type="button"
+            onClick={() => handleAction('dislike')}
+            className="youme-action dislike"
+            disabled={animating}
+            title={t('feed.action.pass')}
+            aria-label={t('feed.action.pass')}
+          >
+            ✕
+          </button>
+        </CoachMark>
 
-        <button
-          type="button"
-          onClick={() => handleAction('super')}
-          className="youme-action super"
-          disabled={animating}
-          title={t('feed.action.superLike')}
+        <CoachMark
+          tooltipId={TOOLTIP_IDS.DISCOVER_SUPER}
+          titleKey="help.tooltips.discoverSuper.title"
+          bodyKey="help.tooltips.discoverSuper.body"
+          placement="top"
+          delayMs={1200}
         >
-          ★
-        </button>
+          <button
+            type="button"
+            onClick={() => handleAction('super')}
+            className="youme-action super"
+            disabled={animating}
+            title={t('feed.action.superLike')}
+            aria-label={t('feed.action.superLike')}
+          >
+            ★
+          </button>
+        </CoachMark>
 
-        <button
-          type="button"
-          onClick={() => handleAction('like')}
-          className="youme-action like"
-          disabled={animating}
-          title={t('feed.action.like')}
+        <CoachMark
+          tooltipId={TOOLTIP_IDS.DISCOVER_LIKE}
+          titleKey="help.tooltips.discoverLike.title"
+          bodyKey="help.tooltips.discoverLike.body"
+          placement="top"
+          delayMs={900}
         >
-          ♥
-        </button>
+          <button
+            type="button"
+            onClick={() => handleAction('like')}
+            className="youme-action like"
+            disabled={animating}
+            title={t('feed.action.like')}
+            aria-label={t('feed.action.like')}
+          >
+            ♥
+          </button>
+        </CoachMark>
       </div>
 
     </div>

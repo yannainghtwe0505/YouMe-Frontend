@@ -65,6 +65,19 @@
     "confirmPassword": "Confirm password",
     "genderPrompt": "How do you identify?",
     "mustBe18": "You must be 18 or older.",
+    "helpLink": "Need help?",
+    "interestOptions": {
+      "travel": "Travel",
+      "gym": "Gym",
+      "anime": "Anime",
+      "movies": "Movies",
+      "reading": "Reading",
+      "music": "Music",
+      "cafe": "Café",
+      "hiking": "Hiking",
+      "cooking": "Cooking",
+      "gaming": "Gaming"
+    },
     "footerHasAccount": "Already have an account?",
     "footerSignIn": "Sign in",
     "done": {
@@ -224,8 +237,10 @@
       "keepSwiping": "Keep swiping",
       "someone": "Someone"
     },
+    "helpLink": "Help",
     "header": {
       "subtitle": "Swipe-style matching — pass, like, or super like",
+      "subtitleBeginner": "✕ skip · ♥ Like · ★ Super Like — tap ? for help",
       "radiusWithLocation": "Within ~{{km}} km — adjust with the filter button",
       "radiusNoLocation": "~{{km}} km selected — add your location in Discovery settings for this to apply"
     },
@@ -446,6 +461,7 @@
     }
   },
   "matches": {
+    "helpLink": "Help",
     "loading": "Loading conversations…",
     "errorLoad": "Could not load conversations",
     "title": "Messages",
@@ -523,7 +539,8 @@
     "discover": "Discover",
     "likes": "Likes",
     "messages": "Messages",
-    "profile": "Profile"
+    "profile": "Profile",
+    "help": "Help"
   },
   "profile": {
     "loading": "Loading your profile...",
@@ -623,7 +640,14 @@
     "pushDisabledOk": "Push notifications disabled.",
     "pushEnableError": "Could not enable push notifications.",
     "pushDisableError": "Could not disable push notifications.",
+    "pushPermissionDenied": "Notification permission was denied. Enable it in your browser settings.",
+    "pushNotConfigured": "Push is not configured on the server yet. Ask your admin to set VAPID keys.",
+    "pushUnsupported": "Push notifications are not supported in this browser.",
+    "verificationPrepare": "Photo tips",
+    "verificationHint": "Clear face photos help trust — full verification coming soon.",
     "safetyLink": "Safety",
+    "helpLink": "Help",
+    "replayTour": "Replay app tour",
     "safetyCenterLink": "Open safety center (blocks & reports)"
   },
   "safety": {
@@ -795,7 +819,225 @@
     "menuUnmatch": "Unmatch",
     "menuBlock": "Block",
     "menuReport": "Report",
+    "reportModal": {
+      "title": "Report this person",
+      "lead": "Tell us what happened. Our team reviews reports confidentially.",
+      "leadNamed": "Report {{name}}. Our team reviews reports confidentially.",
+      "reasonLabel": "What happened?",
+      "reasonRequired": "Please choose a reason.",
+      "detailsLabel": "Additional details (optional)",
+      "detailsPlaceholder": "What happened? Include anything that helps us review.",
+      "helpLink": "Learn about report & block",
+      "submit": "Submit report",
+      "submitting": "Submitting…",
+      "reasons": {
+        "HARASSMENT": "Harassment or bullying",
+        "SPAM": "Spam",
+        "SCAM": "Scam or fraud",
+        "INAPPROPRIATE_CONTENT": "Inappropriate photos or content",
+        "UNDERAGE": "They may be under 18",
+        "OTHER": "Something else"
+      }
+    },
     "readReceiptDelivered": "Delivered",
     "readReceiptRead": "Read"
+  },
+  "help": {
+    "iconLabel": "Help",
+    "center": {
+      "title": "Help Center",
+      "subtitle": "Answers for first-time users — likes, matches, safety, and your account.",
+      "searchLabel": "Search help",
+      "searchPlaceholder": "Search help… e.g. Super Like, match, report",
+      "featureCardsTitle": "Quick explainers",
+      "noResults": "No articles match your search. Try “Like” or “match”, or ask the assistant below.",
+      "resumeOnboarding": "New to YouMe? Take a 1-minute tour.",
+      "startTour": "Start tour"
+    },
+    "categories": {
+      "gettingStarted": "Getting started",
+      "matching": "Matching & likes",
+      "safety": "Safety & privacy",
+      "account": "Account & plans"
+    },
+    "features": {
+      "like": {
+        "title": "Like",
+        "desc": "Show interest — match if they like you too."
+      },
+      "superLike": {
+        "title": "Super Like",
+        "desc": "Stand out with a stronger signal."
+      },
+      "match": {
+        "title": "Matching",
+        "desc": "What happens when you both like each other."
+      },
+      "safety": {
+        "title": "Safety",
+        "desc": "Report, block, and meet safely."
+      }
+    },
+    "tooltips": {
+      "gotIt": "Got it",
+      "discoverPass": {
+        "title": "Pass (✕)",
+        "body": "Skip this profile. They won’t be notified, and you may see them again later depending on filters."
+      },
+      "discoverLike": {
+        "title": "Like (♥)",
+        "body": "Send a Like to show interest. If they Like you back, it’s a match — then you can message."
+      },
+      "discoverSuper": {
+        "title": "Super Like (★)",
+        "body": "Super Like is stronger than a regular Like. Use it when someone really stands out — they’re more likely to notice you."
+      },
+      "discoverSettings": {
+        "title": "Discovery settings",
+        "body": "Adjust age, distance, and who you see. If the deck runs empty, try widening distance or age here."
+      },
+      "profileVerification": {
+        "title": "Profile photos & verification",
+        "body": "Use clear photos of your face. Verified badges are coming soon — good photos help you match now."
+      }
+    },
+    "onboarding": {
+      "skip": "Skip",
+      "later": "Later",
+      "next": "Next",
+      "finish": "Start discovering",
+      "openHelpCenter": "Browse full Help Center",
+      "emoji": {
+        "welcome": "👋",
+        "matching": "💞",
+        "likes": "♥",
+        "safety": "🛡",
+        "profile": "✨",
+        "ai": "🤖"
+      },
+      "slides": {
+        "welcome": {
+          "title": "Welcome to YouMe",
+          "body": "We help you meet people nearby with respect and clarity. This short tour explains the basics — you can replay it anytime from Help."
+        },
+        "matching": {
+          "title": "How matching works",
+          "body": "Browse profiles on Discover. When you both tap Like, it’s a match. Then head to Messages to chat."
+        },
+        "likes": {
+          "title": "Like vs Super Like",
+          "body": "♥ Like = interest. ★ Super Like = stronger signal so you stand out. ✕ Pass = skip without notifying them."
+        },
+        "safety": {
+          "title": "Stay safe",
+          "body": "Meet in public for first dates. Use Report or Block from chat if someone makes you uncomfortable. Safety tools are in your Profile."
+        },
+        "profile": {
+          "title": "A great profile",
+          "body": "Add clear photos and a short bio. Discovery settings control who you see — widen filters if you run out of profiles."
+        },
+        "ai": {
+          "title": "YouMe coach (optional)",
+          "body": "AI tips can help with your profile or conversation ideas. Your plan controls daily limits — never required to enjoy the app."
+        }
+      }
+    },
+    "ai": {
+      "title": "Ask YouMe",
+      "lead": "Short answers about how the app works. We don’t read your private chats.",
+      "placeholder": "e.g. What’s the difference between Like and Super Like?",
+      "ask": "Ask",
+      "asking": "Thinking…",
+      "error": "Could not get an answer. Try the articles above.",
+      "noAnswer": "Check the FAQ articles above, or contact support.",
+      "signInRequired": "Sign in to use the assistant. FAQ articles above work without an account."
+    },
+    "contact": {
+      "title": "Contact support",
+      "body": "Still stuck? Email us — include your account email and a short description.",
+      "cta": "Email support",
+      "email": "support@youme.app"
+    },
+    "articles": {
+      "what_is_like": {
+        "category": "matching",
+        "title": "What is Like?",
+        "summary": "Show interest with the heart button.",
+        "body": "Like (♥) tells someone you’re interested.\n\nIf they Like you back, YouMe creates a match and you can message each other.\n\nIf they don’t Like you back, they won’t be notified of your Like (standard dating-app behavior).\n\nYou can review people you liked under the Likes tab."
+      },
+      "what_is_super_like": {
+        "category": "matching",
+        "title": "What is Super Like?",
+        "summary": "A stronger signal than a regular Like.",
+        "body": "Super Like (★) is for when someone really stands out.\n\nIt’s a stronger signal than a regular Like — they’re more likely to notice you in their list.\n\nUse it thoughtfully; saving Super Likes for people you’re genuinely excited about works best.\n\nMatching still requires mutual interest — Super Like doesn’t force a match."
+      },
+      "how_matching_works": {
+        "category": "matching",
+        "title": "How does matching work?",
+        "summary": "Mutual Likes create a match.",
+        "body": "You match when you and another person both Like each other.\n\nAfter a match, the conversation opens in Messages. A short YouMe coach note may appear to help break the ice.\n\nPasses (✕) skip someone without notifying them."
+      },
+      "after_match": {
+        "category": "matching",
+        "title": "What happens after matching?",
+        "summary": "Chat in Messages and take it at your pace.",
+        "body": "Open Messages to find your match.\n\nSay hello — short, friendly messages work well.\n\nYou can unmatch or block from the chat menu if you’re not comfortable.\n\nMeet in public for first dates and tell a friend your plans."
+      },
+      "boosts": {
+        "category": "account",
+        "title": "How do boosts work?",
+        "summary": "Premium features may increase visibility.",
+        "body": "Boost-style features (when available on your plan) temporarily increase how often your profile is shown.\n\nExact limits depend on your subscription tier — see Upgrade in Profile.\n\nBoosts don’t change matching rules: mutual Likes are still required."
+      },
+      "profile_visibility": {
+        "category": "account",
+        "title": "Profile visibility & Discovery settings",
+        "summary": "Control who you see and how you appear.",
+        "body": "Discovery settings (filter icon on Discover) control age range, distance, and filters.\n\nYour profile photos and bio are what others see on Discover.\n\nSharing approximate location helps distance labels — you control this in Discovery settings and Profile."
+      },
+      "report_block": {
+        "category": "safety",
+        "title": "Report & block",
+        "summary": "Tools in chat and Safety center.",
+        "body": "Block: removes someone from Discover and stops messaging both ways.\n\nReport: flags behavior to our team (harassment, spam, scams, etc.).\n\nUse the ⋮ menu in a chat or visit Safety in Profile to review blocks and reports."
+      },
+      "privacy": {
+        "category": "safety",
+        "title": "Privacy",
+        "summary": "What we show and what stays private.",
+        "body": "Your exact messages are private to the match.\n\nWe don’t translate your chat or profile text into another language automatically — what you write is what others see.\n\nRead our Privacy Policy during registration for full details."
+      },
+      "subscription": {
+        "category": "account",
+        "title": "Subscription plans",
+        "summary": "Free, Plus, and Gold benefits.",
+        "body": "Free includes core Discover, likes, and messaging.\n\nPlus and Gold add AI coach limits, insights, and premium perks — see Upgrade in Profile.\n\nYou can manage billing through the upgrade flow; cancel anytime per store or Stripe rules."
+      },
+      "delete_account": {
+        "category": "account",
+        "title": "Delete my account",
+        "summary": "Permanent removal from Profile settings.",
+        "body": "Go to Profile → Account & security → Delete account.\n\nThis permanently removes your account and data from YouMe.\n\nThis cannot be undone. Download anything you want to keep before deleting."
+      },
+      "beginner_guide": {
+        "category": "gettingStarted",
+        "title": "Beginner guide",
+        "summary": "First week on YouMe.",
+        "body": "1. Complete your profile with 2+ photos and a bio.\n2. On Discover: ✕ pass, ♥ like, ★ super like.\n3. Check Likes to see who liked you.\n4. Message matches in Messages.\n5. Adjust Discovery settings if you run out of profiles."
+      },
+      "safety_guide": {
+        "category": "safety",
+        "title": "Safety guide",
+        "summary": "Meet safely and get help.",
+        "body": "Never send money to someone you met on YouMe.\n\nMeet in public places for first dates.\n\nTell a friend where you’re going.\n\nUse Block and Report if something feels wrong.\n\nVisit Safety in Profile to manage blocks and see your reports.",
+        "linkSafety": "Open Safety center"
+      },
+      "profile_verification": {
+        "category": "account",
+        "title": "Profile verification (coming soon)",
+        "summary": "How to prepare your profile now.",
+        "body": "YouMe will offer photo verification so matches know you’re real.\n\nFor now: use recent photos, show your face clearly, avoid heavy filters.\n\nAdd at least 2 photos in Photos — verification will use your main photo when it launches.\n\nNever share verification codes or passwords with anyone."
+      }
+    }
   }
 }

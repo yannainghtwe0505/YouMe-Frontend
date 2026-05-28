@@ -289,7 +289,7 @@ export default function RegisterPage({ onRegister }) {
     return HOBBY_PRESETS.filter((h) => {
       if (h.toLowerCase().includes(q)) return true;
       const ik = HOBBY_PRESET_I18N[h];
-      return ik && tr(`register.hobbyPreset.${ik}`).toLowerCase().includes(q);
+      return ik && tr(`register.interestOptions.${ik}`).toLowerCase().includes(q);
     });
   }, [interestSearch, tr]);
 
@@ -1044,6 +1044,9 @@ export default function RegisterPage({ onRegister }) {
       case 'legal':
         return (
           <div>
+            <p className="register-help-link-wrap">
+              <Link to="/help?article=safety_guide">{tr('register.helpLink')}</Link>
+            </p>
             {[
               ['over18', legalOver18, setLegalOver18],
               ['tos', legalTos, setLegalTos],
@@ -1383,7 +1386,7 @@ export default function RegisterPage({ onRegister }) {
                     ...tap,
                   }}
                 >
-                  {tr(`register.hobbyPreset.${HOBBY_PRESET_I18N[h]}`)}
+                  {tr(`register.interestOptions.${HOBBY_PRESET_I18N[h]}`)}
                 </button>
               ))}
             </div>

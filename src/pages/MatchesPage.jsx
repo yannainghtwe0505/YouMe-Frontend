@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+import { normalizeToAppLocale } from '../lib/locale';
+import HelpIcon from '../components/help/HelpIcon';
 import api from '../api';
 import { cssUrlValue } from '../imageUtils';
 import Icon from '../components/ui/Icon';
 
 const placeholderAvatar = 'https://randomuser.me/api/portraits/lego/1.jpg';
+
+function localeTag() {
+  const code = normalizeToAppLocale(i18n.language);
+  if (code === 'ja') return 'ja-JP';
+  if (code === 'my') return 'my-MM';
+  return 'en-US';
+}
 
 function formatMessageTime(iso) {
   if (!iso) return '';
@@ -13,10 +23,11 @@ function formatMessageTime(iso) {
   if (Number.isNaN(d.getTime())) return '';
   const now = new Date();
   const sameDay = d.toDateString() === now.toDateString();
+  const loc = localeTag();
   if (sameDay) {
-    return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    return d.toLocaleTimeString(loc, { hour: 'numeric', minute: '2-digit' });
   }
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString(loc, { month: 'short', day: 'numeric' });
 }
 
 function formatLastActive(iso, t) {
@@ -68,8 +79,13 @@ export default function MatchesPage() {
   return (
     <div className="fade-in matches-hub">
       <header className="matches-hub-header">
-        <h1>{t('matches.title')}</h1>
-        <p>{t('matches.subtitle')}</p>
+        <div className="matches-hub-header-row">
+          <div>
+            <h1>{t('matches.title')}</h1>
+            <p>{t('matches.subtitle')}</p>
+          </div>
+          <HelpIcon className="matches-help-trigger" articleId="after_match" />
+        </div>
       </header>
 
       {error && (

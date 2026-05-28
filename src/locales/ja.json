@@ -65,6 +65,19 @@
     "confirmPassword": "パスワード（確認）",
     "genderPrompt": "ご自身について教えてください。",
     "mustBe18": "18歳以上である必要があります。",
+    "helpLink": "ヘルプが必要ですか？",
+    "interestOptions": {
+      "travel": "旅行",
+      "gym": "ジム",
+      "anime": "アニメ",
+      "movies": "映画",
+      "reading": "読書",
+      "music": "音楽",
+      "cafe": "カフェ",
+      "hiking": "ハイキング",
+      "cooking": "料理",
+      "gaming": "ゲーム"
+    },
     "footerHasAccount": "すでにアカウントをお持ちですか？",
     "footerSignIn": "サインイン",
     "done": {
@@ -278,8 +291,10 @@
       "keepSwiping": "スワイプを続ける",
       "someone": "誰か"
     },
+    "helpLink": "ヘルプ",
     "header": {
       "subtitle": "スワイプでマッチ — パス・いいね・スーパーいいね",
+      "subtitleBeginner": "✕スキップ · ♥いいね · ★スーパーライク — ? でヘルプ",
       "radiusWithLocation": "約 {{km}} km 以内 — フィルターで調整",
       "radiusNoLocation": "約 {{km}} km を選択中 — 適用するには Discovery 設定で位置情報を追加"
     },
@@ -500,6 +515,7 @@
     }
   },
   "matches": {
+    "helpLink": "ヘルプ",
     "loading": "会話を読み込み中…",
     "errorLoad": "会話を読み込めませんでした",
     "title": "メッセージ",
@@ -577,7 +593,8 @@
     "discover": "さがす",
     "likes": "いいね",
     "messages": "メッセージ",
-    "profile": "プロフィール"
+    "profile": "プロフィール",
+    "help": "ヘルプ"
   },
   "profile": {
     "loading": "プロフィールを読み込み中…",
@@ -677,7 +694,14 @@
     "pushDisabledOk": "プッシュ通知を無効にしました。",
     "pushEnableError": "通知を有効にできませんでした。",
     "pushDisableError": "通知を無効にできませんでした。",
+    "pushPermissionDenied": "通知の許可がありません。ブラウザの設定で有効にしてください。",
+    "pushNotConfigured": "サーバーでプッシュが未設定です（VAPID キーが必要です）。",
+    "pushUnsupported": "このブラウザではプッシュ通知に対応していません。",
+    "verificationPrepare": "写真のコツ",
+    "verificationHint": "顔がはっきりした写真は信頼につながります — 本人確認は近日公開予定。",
     "safetyLink": "安全",
+    "helpLink": "ヘルプ",
+    "replayTour": "ガイドをもう一度",
     "safetyCenterLink": "安全センター（ブロックと通報）"
   },
   "safety": {
@@ -849,7 +873,107 @@
     "menuUnmatch": "マッチ解除",
     "menuBlock": "ブロック",
     "menuReport": "通報",
+    "reportModal": {
+      "title": "この人を通報",
+      "lead": "状況を教えてください。内容はチームのみが確認します。",
+      "leadNamed": "{{name}} さんを通報します。内容はチームのみが確認します。",
+      "reasonLabel": "どのような問題ですか？",
+      "reasonRequired": "理由を選んでください。",
+      "detailsLabel": "詳細（任意）",
+      "detailsPlaceholder": "状況を具体的に書いてください。",
+      "helpLink": "通報・ブロックについて",
+      "submit": "通報する",
+      "submitting": "送信中…",
+      "reasons": {
+        "HARASSMENT": "ハラスメント・いじめ",
+        "SPAM": "スパム",
+        "SCAM": "詐欺・金銭要求",
+        "INAPPROPRIATE_CONTENT": "不適切な写真・内容",
+        "UNDERAGE": "18歳未満の可能性",
+        "OTHER": "その他"
+      }
+    },
     "readReceiptDelivered": "配信済み",
     "readReceiptRead": "既読"
+  },
+  "help": {
+    "iconLabel": "ヘルプ",
+    "center": {
+      "title": "ヘルプセンター",
+      "subtitle": "はじめての方へ — いいね・マッチ・安全・アカウントの説明",
+      "searchLabel": "ヘルプを検索",
+      "searchPlaceholder": "検索… 例: スーパーライク、マッチ、通報",
+      "featureCardsTitle": "よく見る説明",
+      "noResults": "該当する記事がありません。「いいね」「マッチ」などで検索するか、下の質問欄をお試しください。",
+      "resumeOnboarding": "YouMe は初めてですか？ 1分のガイドツアーがあります。",
+      "startTour": "ツアーを始める"
+    },
+    "categories": {
+      "gettingStarted": "はじめに",
+      "matching": "マッチとライク",
+      "safety": "安全とプライバシー",
+      "account": "アカウントとプラン"
+    },
+    "features": {
+      "like": { "title": "いいね", "desc": "好意を伝える — 相手もいいねでマッチ" },
+      "superLike": { "title": "スーパーライク", "desc": "通常のいいねより目立つシグナル" },
+      "match": { "title": "マッチ", "desc": "お互いにいいねしたあと" },
+      "safety": { "title": "安全", "desc": "通報・ブロック・安全な出会い" }
+    },
+    "tooltips": {
+      "gotIt": "わかりました",
+      "discoverPass": { "title": "スキップ（✕）", "body": "このプロフィールをスキップします。相手に通知は行きません。" },
+      "discoverLike": { "title": "いいね（♥）", "body": "いいねで好意を伝えます。相手もあなたにいいねするとマッチし、メッセージが送れます。" },
+      "discoverSuper": { "title": "スーパーライク（★）", "body": "通常のいいねより強いシグナルです。特に気になる相手に使うと効果的です。" },
+      "discoverSettings": { "title": "ディスカバリー設定", "body": "年齢・距離・表示する相手を調整できます。候補が少ないときは距離や年齢を広げてみてください。" },
+      "profileVerification": { "title": "写真と本人確認", "body": "顔がわかる写真を使いましょう。認証バッジは近日公開 — 今もマッチ率に役立ちます。" }
+    },
+    "onboarding": {
+      "skip": "スキップ",
+      "later": "あとで",
+      "next": "次へ",
+      "finish": "Discover を始める",
+      "openHelpCenter": "ヘルプセンターを見る",
+      "emoji": { "welcome": "👋", "matching": "💞", "likes": "♥", "safety": "🛡", "profile": "✨", "ai": "🤖" },
+      "slides": {
+        "welcome": { "title": "YouMe へようこそ", "body": "近くの人と、尊重し合いながら出会えるアプリです。この短いガイドで基本を説明します。ヘルプからいつでも再生できます。" },
+        "matching": { "title": "マッチの仕組み", "body": "Discover でプロフィールを見ます。お互いにいいねするとマッチ。メッセージで会話を始められます。" },
+        "likes": { "title": "いいねとスーパーライク", "body": "♥ いいね＝好意。★ スーパーライク＝より目立つシグナル。✕ スキップ＝通知なしで次へ。" },
+        "safety": { "title": "安全に使う", "body": "初対面は人の多い場所で。不快なことがあればチャットのメニューから通報・ブロック。プロフィールの「安全」からも管理できます。" },
+        "profile": { "title": "プロフィールのコツ", "body": "はっきりした写真と短い自己紹介を。候補が少ないときはディスカバリー設定で距離や年齢を調整しましょう。" },
+        "ai": { "title": "YouMe コーチ（任意）", "body": "プロフィールや会話のアイデアを AI が手伝うことがあります。プランで1日の回数が決まります — なくてもアプリは楽しめます。" }
+      }
+    },
+    "ai": {
+      "title": "YouMe に質問",
+      "lead": "アプリの使い方について短くお答えします。プライベートなチャット内容は読みません。",
+      "placeholder": "例: いいねとスーパーライクの違いは？",
+      "ask": "質問する",
+      "asking": "考え中…",
+      "error": "回答を取得できませんでした。上の記事をご覧ください。",
+      "noAnswer": "上の FAQ をご確認いただくか、サポートへご連絡ください。",
+      "signInRequired": "アシスタントはサインイン後にご利用いただけます。上の FAQ はアカウントなしでもご覧いただけます。"
+    },
+    "contact": {
+      "title": "サポートに連絡",
+      "body": "解決しない場合はメールで。アカウントのメールと状況を簡単に書いてください。",
+      "cta": "メールする",
+      "email": "support@youme.app"
+    },
+    "articles": {
+      "what_is_like": { "category": "matching", "title": "「いいね」とは？", "summary": "ハートボタンで好意を伝えます。", "body": "いいね（♥）で相手に好意を伝えます。\n\n相手もあなたにいいねするとマッチし、メッセージが送れます。\n\n相手がいいねしなかった場合、あなたのいいねだけが相手に通知されることはありません（一般的なマッチングアプリと同様）。\n\n送ったいいねは「ライク」タブで確認できます。" },
+      "what_is_super_like": { "category": "matching", "title": "スーパーライクとは？", "summary": "通常のいいねより強いシグナルです。", "body": "スーパーライク（★）は、特に気になる相手向けです。\n\n通常のいいねより目立ち、相手の一覧で気づきやすくなります。\n\n本当に話してみたい相手に使うのがおすすめです。\n\nマッチにはお互いのいいねが必要 — スーパーライクだけではマッチしません。" },
+      "how_matching_works": { "category": "matching", "title": "マッチの仕組み", "summary": "お互いのいいねでマッチします。", "body": "あなたと相手が両方いいねするとマッチします。\n\nマッチ後はメッセージで会話できます。短い YouMe コーチのメモが表示されることがあります。\n\nスキップ（✕）は相手に通知せず次のプロフィールへ進みます。" },
+      "after_match": { "category": "matching", "title": "マッチしたあと", "summary": "メッセージでゆっくり進めましょう。", "body": "メッセージを開いてマッチを選びます。\n\n短く友好的な挨拶から始めましょう。\n\n不安ならチャットメニューからマッチ解除・ブロックできます。\n\n初対面は公共の場所で、友人にも伝えておきましょう。" },
+      "boosts": { "category": "account", "title": "ブーストとは？", "summary": "プレミアムで表示が増える場合があります。", "body": "ブースト系機能（プランによる）は一時的にプロフィールの表示機会を増やします。\n\n詳細はプロフィールの「アップグレード」をご覧ください。\n\nマッチの条件は変わりません — お互いのいいねが必要です。" },
+      "profile_visibility": { "category": "account", "title": "表示とディスカバリー設定", "summary": "誰に見えるか・誰を見るか。", "body": "Discover のフィルターアイコンで年齢・距離・条件を調整します。\n\n写真と自己紹介が他のユーザーに表示される内容です。\n\nおおよその距離表示のため位置情報を共有できます — 設定で管理できます。" },
+      "report_block": { "category": "safety", "title": "通報とブロック", "summary": "チャットと安全センターから。", "body": "ブロック: 相手を Discover から消し、メッセージのやり取りを止めます。\n\n通報: ハラスメント・スパム・詐欺などを運営に伝えます。\n\nチャットの ⋮ メニュー、またはプロフィールの「安全」から操作できます。" },
+      "privacy": { "category": "safety", "title": "プライバシー", "summary": "公開される情報と非公開の情報。", "body": "メッセージの内容はマッチ内でのみ共有されます。\n\nチャットやプロフィール文は自動翻訳しません — 書いた言語のまま表示されます。\n\n詳細は登録時のプライバシーポリシーをご確認ください。" },
+      "subscription": { "category": "account", "title": "サブスクリプション", "summary": "Free / Plus / Gold。", "body": "Free で Discover・いいね・メッセージの基本機能が使えます。\n\nPlus / Gold で AI コーチ枠やインサイトなど — プロフィールの「アップグレード」をご覧ください。\n\n解約はストアまたは Stripe の規約に従います。" },
+      "delete_account": { "category": "account", "title": "アカウント削除", "summary": "プロフィールの設定から。", "body": "プロフィール → アカウントとセキュリティ → アカウント削除。\n\nYouMe からアカウントとデータが完全に削除されます。\n\n元に戻せません。必要なデータは事前に保存してください。" },
+      "beginner_guide": { "category": "gettingStarted", "title": "初心者ガイド", "summary": "最初の1週間。", "body": "1. 写真2枚以上と自己紹介を完成させる。\n2. Discover: ✕スキップ、♥いいね、★スーパーライク。\n3. ライクタブで相手からのいいねを確認。\n4. メッセージでマッチと会話。\n5. 候補が少なければディスカバリー設定を広げる。" },
+      "safety_guide": { "category": "safety", "title": "安全ガイド", "summary": "安全に出会うために。", "body": "YouMe で知り合った相手に送金しないでください。\n\n初対面は人の多い場所で。\n\n行き先を友人に伝えましょう。\n\n違和感があればブロック・通報を。\n\nプロフィールの「安全」でブロック一覧と通報を確認できます。", "linkSafety": "安全センターを開く" },
+      "profile_verification": { "category": "account", "title": "本人確認（準備中）", "summary": "今できるプロフィール準備。", "body": "写真による本人確認を準備しています。\n\n今のうちに：最近の写真、顔がはっきり、過度な加工は避ける。\n\n写真は2枚以上 — 公開時はメイン写真を使います。\n\n確認コードやパスワードは誰にも教えないでください。" }
+    }
   }
 }

@@ -21,7 +21,11 @@ import LanguageSelectPage from './pages/LanguageSelectPage';
 import UpgradePage from './pages/UpgradePage';
 import UpgradeSuccessPage from './pages/UpgradeSuccessPage';
 import SafetyPage from './pages/SafetyPage';
+import HelpCenterPage from './pages/HelpCenterPage';
 import Icon from './components/ui/Icon';
+import { HelpProvider } from './context/HelpProvider';
+import ProductOnboarding from './components/help/ProductOnboarding';
+import { initAnalytics, resetAnalytics, trackPageView, flushAnalytics } from './lib/analytics';
 
 function ProtectedRoute({ user, children }) {
   if (!user) {
@@ -98,7 +102,12 @@ function App() {
       }
       const me = await fetchMe(token);
       if (!cancelled) {
-        if (me) setUser(me);
+        if (me) {
+          setUser(me);
+          if (me.registrationComplete !== false) {
+            initAnalytics(me.userId);
+          }
+        }
         setInitializing(false);
       }
     })();
@@ -175,7 +184,12 @@ function App() {
     // Set user immediately so ProtectedRoute and login redirect work before fetchMe resolves.
     setUser({ ...userData, token });
     fetchMe(token).then((me) => {
-      if (me) setUser({ ...userData, ...me, token });
+      if (me) {
+        setUser({ ...userData, ...me, token });
+        if (me.registrationComplete !== false) {
+          initAnalytics(me.userId);
+        }
+      }
     });
   };
 
@@ -213,16 +227,25 @@ function App() {
   }, []);
 
   const handleLogout = () => {
+    void flushAnalytics();
+    resetAnalytics();
     localStorage.removeItem('token');
     setUser(null);
   };
+
+  useEffect(() => {
+    if (!user || user.registrationComplete === false) return;
+    trackPageView(location.pathname + location.search);
+  }, [location.pathname, location.search, user]);
 
   if (initializing) {
     return <div className="loading">{t('common.loading')}</div>;
   }
 
   return (
+    <HelpProvider user={user}>
     <div className="app">
+      <ProductOnboarding />
       <div className="app-content">
         <Routes>
           <Route
@@ -282,6 +305,14 @@ function App() {
             }
           />
           <Route
+            path="/help"
+            element={(
+              <LanguageGate>
+                <HelpCenterPage />
+              </LanguageGate>
+            )}
+          />
+          <Route
             path="/upgrade"
             element={
               <ProtectedRoute user={user}>
@@ -329,7 +360,7 @@ function App() {
       {user
         && user.registrationComplete !== false
         && !location.pathname.startsWith('/upgrade')
-        && !['/login', '/register', '/language'].includes(location.pathname)
+        && !['/login', '/register', '/language', '/help'].includes(location.pathname)
         && (
         <nav className="bottom-nav">
           <div className="nav-container">
@@ -375,6 +406,7 @@ function App() {
         </nav>
       )}
     </div>
+    </HelpProvider>
   );
 }
 

@@ -65,6 +65,19 @@
     "confirmPassword": "စကားဝှက် အတည်ပြုပါ",
     "genderPrompt": "သင်ကိုယ်တိုင်ကို ဘယ်လို သတ်မှတ်မလဲ။",
     "mustBe18": "အသက် ၁၈ နှစ် သို့မဟုတ် ထက်ကြီးရမည်။",
+    "helpLink": "အကူအညီ လိုအပ်ပါသလား။",
+    "interestOptions": {
+      "travel": "ခရီးသွား",
+      "gym": "အားကစား",
+      "anime": "အန်နီမေ",
+      "movies": "ရုပ်ရှင်",
+      "reading": "စာဖတ်ခြင်း",
+      "music": "ဂီတ",
+      "cafe": "ကော်ဖီ",
+      "hiking": "လမ်းလျှောက်",
+      "cooking": "ချက်ပြုတ်",
+      "gaming": "ဂိမ်း"
+    },
     "footerHasAccount": "အကောင့်ရှိပြီးသားလား။",
     "footerSignIn": "ဝင်ရောက်မည်",
     "done": {
@@ -224,8 +237,10 @@
       "keepSwiping": "ဆွဲချက်ကို ဆက်လုပ်မည်",
       "someone": "တစ်စုံတစ်ယောက်"
     },
+    "helpLink": "အကူအညီ",
     "header": {
       "subtitle": "ဆွဲချက် မက်ချင်း — ပ၊ ကြိုက်၊ စူပါ ကြိုက်",
+      "subtitleBeginner": "✕ · ♥ · ★ — ? အကူအညီ",
       "radiusWithLocation": "~{{km}} km အတွင်း — စစ်ထုတ်ခလုတ်ဖြင့် ညှိပါ",
       "radiusNoLocation": "~{{km}} km ရွေးထား — အသုံးပြုရန် Discovery ဆက်တင်တွင် တည်နေရာ ထည့်ပါ"
     },
@@ -446,6 +461,7 @@
     }
   },
   "matches": {
+    "helpLink": "အကူအညီ",
     "loading": "စကားပြောမှုများ ဖတ်နေသည်…",
     "errorLoad": "စကားပြောမှုများ မဖတ်နိုင်ပါ",
     "title": "စာပို့ချက်များ",
@@ -523,7 +539,8 @@
     "discover": "ရှာဖွေရန်",
     "likes": "ကြိုက်နှစ်သက်မှု",
     "messages": "စာပို့ချက်များ",
-    "profile": "ကိုယ်ရေးကိုယ်တာ"
+    "profile": "ကိုယ်ရေးကိုယ်တာ",
+    "help": "အကူအညီ"
   },
   "profile": {
     "loading": "ကိုယ်ရေးကို ဖတ်နေသည်…",
@@ -623,7 +640,14 @@
     "pushDisabledOk": "Push အသိပေးချက် ပိတ်ပြီးပါပြီ။",
     "pushEnableError": "အသိပေးချက် မဖွင့်နိုင်ပါ။",
     "pushDisableError": "အသိပေးချက် မပိတ်နိုင်ပါ။",
+    "pushPermissionDenied": "အသိပေးချက် ခွင့်ပြုချက် မရှိပါ။",
+    "pushNotConfigured": "ဆာဗာတွင် push မသတ်မှတ်ရသေးပါ။",
+    "pushUnsupported": "ဤဘရောက်ဇာတွင် push မပံ့ပိုးပါ။",
+    "verificationPrepare": "ဓာတ်ပုံ အကြံ",
+    "verificationHint": "မျက်နှာ ပေါ်လွင်သော ဓာတ်ပုံများ ယုံကြည်မှု တိုးစေသည်။",
     "safetyLink": "ဘေးကင်းရေး",
+    "helpLink": "အကူအညီ",
+    "replayTour": "လမ်းညွှန် ပြန်ကြည့်မည်",
     "safetyCenterLink": "ဘေးကင်းရေးစင်တာ (ပိတ်ထားသူများနှင့် တိုင်ကြားချက်များ)"
   },
   "safety": {
@@ -795,7 +819,107 @@
     "menuUnmatch": "မကိုက်ညီတော့ပါ",
     "menuBlock": "ပိတ်မည်",
     "menuReport": "တိုင်ကြားမည်",
+    "reportModal": {
+      "title": "ဤလူအား တိုင်ကြားမည်",
+      "lead": "ဘာဖြစ်ခဲ့သလဲ ပြောပါ။",
+      "leadNamed": "{{name}} ကို တိုင်ကြားမည်။",
+      "reasonLabel": "အကြောင်းအရင်း",
+      "reasonRequired": "အကြောင်းအရင်း ရွေးပါ။",
+      "detailsLabel": "အသေးစိတ် (မလိုလျှင် ချန်ထားနိုင်သည်)",
+      "detailsPlaceholder": "ဘာဖြစ်ခဲ့သလဲ…",
+      "helpLink": "တိုင်ကြား / ပိတ်မှု အကြောင်း",
+      "submit": "တိုင်ကြားမည်",
+      "submitting": "ပို့နေသည်…",
+      "reasons": {
+        "HARASSMENT": "နှိပ်စက်မှု",
+        "SPAM": "စပမ်",
+        "SCAM": "လိမ်လည်မှု",
+        "INAPPROPRIATE_CONTENT": "မသင့်လျော်သော အကြောင်းအရာ",
+        "UNDERAGE": "၁၈ နှစ်အောက် ဖြစ်နိုင်သည်",
+        "OTHER": "အခြား"
+      }
+    },
     "readReceiptDelivered": "ပို့ပြီး",
     "readReceiptRead": "ဖတ်ပြီး"
+  },
+  "help": {
+    "iconLabel": "အကူအညီ",
+    "center": {
+      "title": "အကူအညီ စင်တာ",
+      "subtitle": "အသစ်သုံးသူများအတွက် — Like၊ Match၊ ဘေးကင်းရေး",
+      "searchLabel": "ရှာဖွေရန်",
+      "searchPlaceholder": "ရှာဖွေပါ… ဥပမာ Super Like",
+      "featureCardsTitle": "အမြန်ရှင်းလင်းချက်များ",
+      "noResults": "မတွေ့ပါ။ အောက်တွင် မေးမြန်းကြည့်ပါ။",
+      "resumeOnboarding": "YouMe အသစ်လား။ ၁ မိနစ်လမ်းညွှန် ရှိပါသည်။",
+      "startTour": "လမ်းညွှန် စတင်မည်"
+    },
+    "categories": {
+      "gettingStarted": "စတင်ခြင်း",
+      "matching": "Match နှင့် Like",
+      "safety": "ဘေးကင်းရေး",
+      "account": "အကောင့်"
+    },
+    "features": {
+      "like": { "title": "Like", "desc": "စိတ်ဝင်စားမှု ပြပါ" },
+      "superLike": { "title": "Super Like", "desc": "ပိုမိုထင်ရှားစေသည်" },
+      "match": { "title": "Matching", "desc": "နှစ်ဦးစလုံး Like လုပ်သောအခါ" },
+      "safety": { "title": "ဘေးကင်းရေး", "desc": "တိုင်ကြား၊ ပိတ်မည်" }
+    },
+    "tooltips": {
+      "gotIt": "နားလည်ပါပြီ",
+      "discoverPass": { "title": "Pass (✕)", "body": "ဤပရိုဖိုင်ကို ကျော်ပါ။ အကြောင်းကြားမည်မဟုတ်။" },
+      "discoverLike": { "title": "Like (♥)", "body": "စိတ်ဝင်စားမှု ပြပါ။ ပြန်လည် Like လုပ်ပါက Match ဖြစ်သည်။" },
+      "discoverSuper": { "title": "Super Like (★)", "body": "သာမန် Like ထက် အားကောင်းသည်။ အထူးစိတ်ဝင်စားသူများအတွက်။" },
+      "discoverSettings": { "title": "Discovery settings", "body": "အသက်၊ အကွာအဝေး ပြင်ဆင်ပါ။" },
+      "profileVerification": { "title": "ဓာတ်ပုံနှင့် အတည်ပြုမှု", "body": "မျက်နှာ ပေါ်လွင်သော ဓာတ်ပုံ သုံးပါ။" }
+    },
+    "onboarding": {
+      "skip": "ကျော်မည်",
+      "later": "နောက်မှ",
+      "next": "ရှေ့",
+      "finish": "Discover စတင်မည်",
+      "openHelpCenter": "အကူအညီ စင်တာ",
+      "emoji": { "welcome": "👋", "matching": "💞", "likes": "♥", "safety": "🛡", "profile": "✨", "ai": "🤖" },
+      "slides": {
+        "welcome": { "title": "YouMe ကို ကြိုဆိုပါသည်", "body": "အနီးအနားရှိ လူများနှင့် လေးစားမှုဖြင့် တွေ့ဆုံပါ။" },
+        "matching": { "title": "Match ဘယ်လိုလဲ", "body": "Discover တွင် ကြည့်ပါ။ နှစ်ဦးစလုံး Like လုပ်ပါက Match။" },
+        "likes": { "title": "Like vs Super Like", "body": "♥ Like · ★ Super Like · ✕ Pass" },
+        "safety": { "title": "ဘေးကင်းစွာ", "body": "ပထမဆုံး တွေ့ဆုံမှုကို လူများရှိသော နေရာတွင်။" },
+        "profile": { "title": "ပရိုဖိုင်", "body": "ရှင်းလင်းသော ဓာတ်ပုံများနှင့် bio ထည့်ပါ။" },
+        "ai": { "title": "YouMe coach", "body": "AI အကြံပြုချက်များ — မလိုအပ်ပါ။" }
+      }
+    },
+    "ai": {
+      "title": "YouMe ကို မေးပါ",
+      "lead": "အက်ပ်လုပ်ပုံ အတိုချုပ်။",
+      "placeholder": "ဥပမာ Like နဲ့ Super Like ကွာခြားချက်?",
+      "ask": "မေးမည်",
+      "asking": "စဉ်းစားနေသည်…",
+      "error": "မရပါ။",
+      "noAnswer": "FAQ ကြည့်ပါ။",
+      "signInRequired": "အကူအညီအတွက် စာရင်းသွင်းပါ။ FAQ ကို အကောင့်မလိုဘဲ ဖတ်နိုင်သည်။"
+    },
+    "contact": {
+      "title": "ပံ့ပိုးမှု",
+      "body": "အီးမေးလ်ပို့ပါ။",
+      "cta": "အီးမေးလ်",
+      "email": "support@youme.app"
+    },
+    "articles": {
+      "what_is_like": { "category": "matching", "title": "Like ဆိုတာ?", "summary": "♥ ခလုတ်", "body": "Like (♥) ဖြင့် စိတ်ဝင်စားမှု ပြပါ။\n\nပြန်လည် Like လုပ်ပါက Match ဖြစ်ပြီး စာပို့နိုင်သည်။" },
+      "what_is_super_like": { "category": "matching", "title": "Super Like?", "summary": "ပိုအားကောင်းသော အချက်ပြမှု", "body": "Super Like (★) သည် သာမန် Like ထက် ထင်ရှားသည်။" },
+      "how_matching_works": { "category": "matching", "title": "Match ဘယ်လို", "summary": "နှစ်ဦးစလုံး Like", "body": "နှစ်ဦးစလုံး Like လုပ်သောအခါ Match ဖြစ်သည်။" },
+      "after_match": { "category": "matching", "title": "Match ပြီးနောက်", "summary": "Messages တွင် စကားပြောပါ", "body": "Messages ဖွင့်ပြီး စကားစပြောပါ။" },
+      "boosts": { "category": "account", "title": "Boost", "summary": "Premium", "body": "သင့်အစီအစဉ်အလိုက် မြင်သာမှု တိုးနိုင်သည်။" },
+      "profile_visibility": { "category": "account", "title": "မြင်သာမှု", "summary": "Discovery settings", "body": "Discover တွင် filter ဖြင့် ပြင်ဆင်ပါ။" },
+      "report_block": { "category": "safety", "title": "တိုင်ကြား / ပိတ်", "summary": "Chat menu", "body": "Block နှင့် Report ကို chat menu မှ သုံးပါ။" },
+      "privacy": { "category": "safety", "title": "ကိုယ်ရေးအချက်", "summary": "သီးသန့် စာများ", "body": "စာပို့ချက်များသည် Match အတွင်းတွင်သာ။" },
+      "subscription": { "category": "account", "title": "စာရင်းသွင်း", "summary": "Free / Plus / Gold", "body": "Profile → Upgrade ကြည့်ပါ။" },
+      "delete_account": { "category": "account", "title": "အကောင့် ဖျက်မည်", "summary": "အမြဲတမ်း", "body": "Profile → Account & security → Delete account။" },
+      "beginner_guide": { "category": "gettingStarted", "title": "အသစ်သုံးသူ", "summary": "ပထမအပတ်", "body": "1. ဓာတ်ပုံ+bio 2. Discover 3. Likes 4. Messages 5. Settings" },
+      "safety_guide": { "category": "safety", "title": "ဘေးကင်းရေး", "summary": "လုံခြုံစွာ", "body": "ငွေမပို့ပါနှင့်။ လူများရှိသော နေရာတွင် တွေ့ဆုံပါ။", "linkSafety": "ဘေးကင်းရေး စင်တာ" },
+      "profile_verification": { "category": "account", "title": "အတည်ပြုမှု (မကြာမီ)", "summary": "ပရိုဖိုင် ပြင်ဆင်ခြင်း", "body": "မျက်နှာ ပေါ်လွင်သော ဓာတ်ပုံ ၂ ပုံအထက် ထည့်ပါ။" }
+    }
   }
 }

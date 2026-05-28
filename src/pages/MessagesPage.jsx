@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { createMatchChatSocket } from '../chatSocket';
 import { cssUrlValue } from '../imageUtils';
+import ReportUserModal from '../components/safety/ReportUserModal';
+import { track } from '../lib/analytics';
 
 /** Backup polling when WebSocket is down (ms). */
 const POLL_BACKUP_MS = 22000;
@@ -69,6 +71,9 @@ export default function MessagesPage() {
   const [sending, setSending] = useState(false);
   const [peer, setPeer] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [banner, setBanner] = useState(null);
   const [llmConfigured, setLlmConfigured] = useState(false);
   const [replyIdeas, setReplyIdeas] = useState([]);
   const [replyLoading, setReplyLoading] = useState(false);
@@ -378,25 +383,30 @@ export default function MessagesPage() {
     setMenuOpen(false);
   };
 
-  const reportPeer = async () => {
+  const openReportModal = () => {
     if (!peer?.userId) return;
-    const reasonRaw = window.prompt(t('messages.reportReasonPrompt'));
-    if (reasonRaw == null) return;
-    const reason = String(reasonRaw).trim().toUpperCase().replace(/\s+/g, '_');
-    if (!reason) return;
-    const detailsRaw = window.prompt(t('messages.reportDetailsPrompt'));
-    const details = detailsRaw == null ? '' : String(detailsRaw).trim();
+    track('report_modal_opened', { matchId });
+    setMenuOpen(false);
+    setReportOpen(true);
+  };
+
+  const submitReport = async ({ reason, details }) => {
+    if (!peer?.userId) return;
+    setReportSubmitting(true);
+    setError(null);
     try {
       await api.post(`/reports/users/${peer.userId}`, {
         reason,
-        details: details || null,
+        details,
         matchId: Number(matchId),
       });
-      setError(t('messages.reportSuccess'));
+      setReportOpen(false);
+      setBanner({ type: 'ok', text: t('messages.reportSuccess') });
     } catch {
       setError(t('messages.reportError'));
+    } finally {
+      setReportSubmitting(false);
     }
-    setMenuOpen(false);
   };
 
   const sendMessage = async () => {
@@ -467,6 +477,13 @@ export default function MessagesPage() {
 
   return (
     <div className="fade-in">
+      <ReportUserModal
+        open={reportOpen}
+        peerName={peer?.name}
+        onClose={() => setReportOpen(false)}
+        onSubmit={submitReport}
+        submitting={reportSubmitting}
+      />
       <div className="card chat-page-card">
         <div className="chat-header">
           <Link to="/messages" className="chat-back" aria-label={t('messages.backToListAria')}>‹</Link>
@@ -507,7 +524,7 @@ export default function MessagesPage() {
                 <button type="button" className="chat-menu-item danger" role="menuitem" onClick={blockPeer}>
                   {t('messages.menuBlock')}
                 </button>
-                <button type="button" className="chat-menu-item danger" role="menuitem" onClick={reportPeer}>
+                <button type="button" className="chat-menu-item danger" role="menuitem" onClick={openReportModal}>
                   {t('messages.menuReport')}
                 </button>
               </div>
@@ -515,6 +532,12 @@ export default function MessagesPage() {
           </div>
         </div>
 
+        {banner ? (
+          <div className={`chat-banner chat-banner--${banner.type}`} role="status">
+            {banner.text}
+            <button type="button" className="chat-banner-dismiss" onClick={() => setBanner(null)} aria-label={t('common.cancel')}>×</button>
+          </div>
+        ) : null}
         <div className="message-list chat-thread">
           {messages.length > 0 ? (
             messages.map((msg, index) => (
@@ -621,7 +644,10 @@ export default function MessagesPage() {
             disabled={!body.trim() || sending}
             aria-label={t('messages.send')}
           >
-            {sending ? t('messages.sending') : '📤'}
+            <span className={`chat-send-icon${sending ? ' is-sending' : ''}`} aria-hidden>
+              ➤
+            </span>
+            <span className="sr-only">{sending ? t('messages.sending') : t('messages.send')}</span>
           </button>
         </div>
 

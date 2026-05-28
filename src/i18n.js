@@ -8,7 +8,7 @@
  *
  * Key layout (single `translation` namespace, nested JSON):
  * - `common`, `app`, `errors`, `lang`, `auth`, `register`, `nav`
- * - `feed`, `discover`, `matches`, `likes`, `photos`, `messages`, `profile`
+ * - `feed`, `discover`, `matches`, `likes`, `photos`, `messages`, `profile`, `help`
  */
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';

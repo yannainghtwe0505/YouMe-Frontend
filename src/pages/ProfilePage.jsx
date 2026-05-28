@@ -5,6 +5,15 @@ import i18n from '../i18n';
 import { normalizeToAppLocale } from '../lib/locale';
 import api from '../api';
 import Icon from '../components/ui/Icon';
+import { useHelp } from '../context/HelpProvider';
+import CoachMark from '../components/help/CoachMark';
+import { TOOLTIP_IDS } from '../help/constants';
+import {
+  isWebPushSupported,
+  subscribeAndRegisterWebPush,
+  unsubscribeWebPush,
+  fetchWebPushConfig,
+} from '../lib/webPush';
 
 function ageToBirthdayIso(age) {
   if (age == null || age === '') return null;
@@ -106,6 +115,7 @@ function profileToPayload(fields) {
 export default function ProfilePage({ onLogout }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { resumeOnboarding } = useHelp();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -158,6 +168,7 @@ export default function ProfilePage({ onLogout }) {
   const [pushDevices, setPushDevices] = useState(0);
   const [pushBusy, setPushBusy] = useState(false);
   const [pushMsg, setPushMsg] = useState(null);
+  const [webPushConfigured, setWebPushConfigured] = useState(false);
 
   useEffect(() => {
     api.get('/me')
@@ -370,35 +381,46 @@ export default function ProfilePage({ onLogout }) {
     }
   };
 
-  const ensureLocalPushToken = () => {
-    const key = 'youme-web-push-token';
-    let token = localStorage.getItem(key);
-    if (token) return token;
-    token = `web-${crypto.randomUUID()}`;
-    localStorage.setItem(key, token);
-    return token;
-  };
+  useEffect(() => {
+    fetchWebPushConfig()
+      .then((cfg) => setWebPushConfigured(Boolean(cfg?.enabled && cfg?.publicKey)))
+      .catch(() => setWebPushConfigured(false));
+  }, []);
 
   const enablePush = async () => {
     setPushBusy(true);
     setPushMsg(null);
     try {
-      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
-        await Notification.requestPermission();
-      }
-      const token = ensureLocalPushToken();
       const locale = normalizeToAppLocale(i18n.language);
-      const res = await api.put('/me/notifications/device-token', {
-        token,
-        platform: 'WEB',
-        locale,
-        enabled: true,
-      });
+      if (webPushConfigured && isWebPushSupported()) {
+        await subscribeAndRegisterWebPush(locale);
+      } else if (typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission === 'default') {
+          await Notification.requestPermission();
+        }
+        if (Notification.permission !== 'granted') {
+          setPushMsg({ type: 'err', text: t('profile.pushPermissionDenied') });
+          return;
+        }
+        setPushMsg({ type: 'err', text: t('profile.pushNotConfigured') });
+        return;
+      } else {
+        setPushMsg({ type: 'err', text: t('profile.pushUnsupported') });
+        return;
+      }
+      const res = await api.get('/me/notifications/preferences');
       setPushEnabled(Boolean(res.data?.pushEnabled));
       setPushDevices(Number(res.data?.registeredDevices) || 0);
       setPushMsg({ type: 'ok', text: t('profile.pushEnabledOk') });
-    } catch {
-      setPushMsg({ type: 'err', text: t('profile.pushEnableError') });
+    } catch (err) {
+      const code = err?.message;
+      if (code === 'permission_denied') {
+        setPushMsg({ type: 'err', text: t('profile.pushPermissionDenied') });
+      } else if (code === 'not_configured') {
+        setPushMsg({ type: 'err', text: t('profile.pushNotConfigured') });
+      } else {
+        setPushMsg({ type: 'err', text: t('profile.pushEnableError') });
+      }
     } finally {
       setPushBusy(false);
     }
@@ -408,11 +430,12 @@ export default function ProfilePage({ onLogout }) {
     setPushBusy(true);
     setPushMsg(null);
     try {
-      const token = localStorage.getItem('youme-web-push-token');
-      if (token) {
-        await api.delete('/me/notifications/device-token', { data: { token } }).catch(() => {});
+      if (webPushConfigured && isWebPushSupported()) {
+        await unsubscribeWebPush();
+      } else {
+        await api.put('/me/notifications/preferences', { enabled: false });
       }
-      const res = await api.put('/me/notifications/preferences', { enabled: false });
+      const res = await api.get('/me/notifications/preferences');
       setPushEnabled(Boolean(res.data?.pushEnabled));
       setPushDevices(Number(res.data?.registeredDevices) || 0);
       setPushMsg({ type: 'ok', text: t('profile.pushDisabledOk') });
@@ -570,6 +593,9 @@ export default function ProfilePage({ onLogout }) {
             {profile.name || profile.username || t('profile.yourProfileTitle')}
           </h1>
           <div className="profile-member-line">
+            <span className="profile-verification-pill" title={t('profile.verificationHint')}>
+              {t('profile.verificationPrepare')}
+            </span>
             <span className={profile.subscriptionPlan === 'FREE' ? 'profile-plan-muted' : 'profile-premium-pill'}>
               {profile.subscriptionPlan === 'GOLD'
                 ? t('profile.planGold')
@@ -581,15 +607,25 @@ export default function ProfilePage({ onLogout }) {
           <nav className="profile-quick-links" aria-label={t('profile.quickLinksAria')}>
             <Link to="/">{t('nav.discover')}</Link>
             <span className="profile-quick-sep" aria-hidden>·</span>
-            <Link to="/photos">
-              {t('profile.photosLink')}
-              {' '}
-              ({(profile.photos && profile.photos.length) || 0}/6)
-            </Link>
+            <CoachMark
+              tooltipId={TOOLTIP_IDS.PROFILE_VERIFICATION}
+              titleKey="help.tooltips.profileVerification.title"
+              bodyKey="help.tooltips.profileVerification.body"
+              placement="bottom"
+              delayMs={800}
+            >
+              <Link to="/photos">
+                {t('profile.photosLink')}
+                {' '}
+                ({(profile.photos && profile.photos.length) || 0}/6)
+              </Link>
+            </CoachMark>
             <span className="profile-quick-sep" aria-hidden>·</span>
             <Link to="/upgrade">{t('profile.upgradePlansLink')}</Link>
             <span className="profile-quick-sep" aria-hidden>·</span>
             <Link to="/safety">{t('profile.safetyLink')}</Link>
+            <span className="profile-quick-sep" aria-hidden>·</span>
+            <Link to="/help">{t('profile.helpLink')}</Link>
           </nav>
         </div>
 
@@ -776,7 +812,13 @@ export default function ProfilePage({ onLogout }) {
             <details className="profile-account-details">
               <summary>{t('profile.accountSecurity')}</summary>
               <p className="profile-account-hint" style={{ margin: '12px 16px 0' }}>
+                <Link to="/help">{t('profile.helpLink')}</Link>
+                {' · '}
                 <Link to="/safety">{t('profile.safetyCenterLink')}</Link>
+                {' · '}
+                <button type="button" className="profile-link-btn" onClick={resumeOnboarding}>
+                  {t('profile.replayTour')}
+                </button>
               </p>
               <div className="profile-account-body">
                 {pwdMsg ? (
@@ -830,7 +872,7 @@ export default function ProfilePage({ onLogout }) {
                       {pushMsg.text}
                     </div>
                   ) : null}
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <div className="profile-action-grid">
                     <button
                       type="button"
                       className="btn btn-ghost btn-sm profile-btn-narrow"
