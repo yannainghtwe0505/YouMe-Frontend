@@ -3305,26 +3305,33 @@ img.discover-detail-hero-bg {
   width: min(280px, 92vw);
   padding: 12px 14px;
   border-radius: 14px;
-  background: var(--bg-elevated, #1e1e28);
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.14));
+  background: linear-gradient(180deg, rgba(17, 20, 38, 0.96), rgba(11, 14, 30, 0.96));
+  border: 1px solid rgba(141, 125, 255, 0.36);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
   animation: coachMarkIn 0.28s ease-out;
+  color: #e8eeff;
 }
 .coach-mark-title {
   margin: 0 0 6px;
   font-weight: 700;
   font-size: 0.95rem;
-  color: var(--text-primary);
+  color: #f5f8ff;
+  text-shadow: 0 1px 6px rgba(8, 10, 24, 0.45);
 }
 .coach-mark-body {
   margin: 0 0 10px;
   font-size: 0.85rem;
   line-height: 1.45;
-  color: var(--text-secondary);
+  color: rgba(224, 233, 255, 0.95);
+  text-shadow: 0 1px 4px rgba(8, 10, 24, 0.35);
 }
 .coach-mark-actions {
   display: flex;
   justify-content: flex-end;
+}
+.coach-mark .btn.btn-primary {
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(109, 94, 247, 0.35);
 }
 @keyframes coachMarkIn {
   from { opacity: 0; transform: translateX(-50%) translateY(6px); }
@@ -3349,6 +3356,7 @@ img.discover-detail-hero-bg {
   border: 1px solid rgba(125, 113, 255, 0.28);
   box-shadow: 0 16px 44px rgba(4, 6, 20, 0.55);
   animation: authEntranceUp 0.4s ease-out;
+  color: #e9eeff;
 }
 .product-onboarding-progress {
   display: flex;
@@ -3437,7 +3445,23 @@ img.discover-detail-hero-bg {
   font-size: 0.85rem;
 }
 .product-onboarding-more a {
-  color: var(--accent-primary, #6d5ef7);
+  color: #c6b9ff;
+  text-decoration-color: rgba(198, 185, 255, 0.72);
+}
+.product-onboarding-more a:hover {
+  color: #e0d7ff;
+}
+.product-onboarding-footer .btn.btn-ghost {
+  background: rgba(255, 255, 255, 0.08);
+  color: #eef2ff;
+  border-color: rgba(160, 146, 255, 0.42);
+}
+.product-onboarding-footer .btn.btn-ghost:hover {
+  background: rgba(162, 145, 255, 0.18);
+  color: #ffffff;
+}
+.product-onboarding-footer .btn.btn-primary {
+  color: #fff;
 }
 .help-center-page {
   padding: 16px 16px 100px;
